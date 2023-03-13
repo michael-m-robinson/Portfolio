@@ -4,9 +4,11 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Portfolio.Extensions;
+using Portfolio.Models;
 using Portfolio.Models.Content;
 using Portfolio.Models.ViewModels;
 using Portfolio.Services.Interfaces;
@@ -23,18 +25,21 @@ public class ProjectsController : Controller
     private readonly IMWSOpenGraphService _openGraphService;
     private readonly IMWSProjectImageService _projectImageService;
     private readonly IMWSProjectService _projectService;
+    private readonly UserManager<BlogUser> _userManager;
 
     public ProjectsController(IMWSProjectService projectService,
         IMWSCivilityService civilityService,
         IMWSProjectImageService projectImageService,
         IMWSImageService imageService,
-        IMWSOpenGraphService openGraphService)
+        IMWSOpenGraphService openGraphService, 
+        UserManager<BlogUser> userManager)
     {
         _projectService = projectService;
         _civilityService = civilityService;
         _projectImageService = projectImageService;
         _imageService = imageService;
         _openGraphService = openGraphService;
+        _userManager = userManager;
     }
 
     [TempData] public string StatusMessage { get; set; } = default!;
@@ -50,6 +55,15 @@ public class ProjectsController : Controller
         var projects = await _projectService.GetAllProjectsAsync();
 
         return View("AuthorIndex", await projects.ToPagedListAsync(pageNumber, pageSize));
+    }
+
+    #endregion
+
+    #region Author Index get action
+
+    public IActionResult AuthorIndex()
+    {
+        return NotFound();
     }
 
     #endregion
@@ -253,6 +267,24 @@ public class ProjectsController : Controller
         if (lastProjectIndex != -1) ViewBag.LastProjectIndex = projects[lastProjectIndex].Slug!;
 
         return View(project);
+    }
+
+    #endregion
+
+    #region Project Search Action
+
+    public async Task<IActionResult> Search(string term, int? page)
+    {
+        var blogUserId = _userManager.GetUserId(User);
+        var pageNumber = page ?? 1;
+        var pageSize = 10;
+        var projects = await _projectService.GetAllProjectsAsync();
+
+        var result = projects
+            .Where(p => p.Title.ToLower().Contains(term.ToLower()));
+
+        //return posts to the author index view.
+        return View("AuthorIndex", await result.ToPagedListAsync(pageNumber, pageSize));
     }
 
     #endregion

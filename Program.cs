@@ -1,6 +1,7 @@
 #region Imports
 
 using System.Reflection;
+using System.Runtime.InteropServices;
 using AspNetCore.ReCaptcha;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Identity;
@@ -107,9 +108,22 @@ app.UseImageSharp();
 app.UseStaticFiles();
 
 var env = app.Environment;
+var osDirectory = string.Empty;
+if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX) 
+    || RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+{
+    Console.WriteLine("We're on Unix!");
+    osDirectory = "../ArticleImages";
+}
+else
+{
+    Console.WriteLine("We're on Windows!");
+    osDirectory = "..\\ArticleImages";
+}
+
 app.UseStaticFiles(new StaticFileOptions
 {
-    FileProvider = new PhysicalFileProvider(Path.Combine(env.ContentRootPath, "..\\ArticleImages")),
+    FileProvider = new PhysicalFileProvider(Path.Combine(env.ContentRootPath, osDirectory)),
     RequestPath = "/ArticleImages"
 });
 

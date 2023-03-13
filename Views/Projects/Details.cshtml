@@ -99,10 +99,10 @@
                                         <a class="fa fa-facebook" href="@($"https://www.facebook.com/sharer.php?u=https://{Context.Request.Host}{Url.Action("Details", "Projects", new { slug = Model.Slug })}")" target="_blank"></a>
                                     </li>
                                     <li class="list-item" data-toggle="tooltip" title="Twitter">
-                                        <a class="fa fa-twitter" href="@($"https://twitter.com/share?url=https://{Context.Request.Host}{Url.Action("Details", "Projects", new { slug = Model.Slug })}")" target="_blank"></a>
+                                        <a class="fa fa-twitter" href="@($"https://twitter.com/intent/tweet?url=https://{Context.Request.Host}{Url.Action("Details", "Projects", new { slug = Model.Slug })}")" target="_blank"></a>
                                     </li>
                                     <li class="list-item" data-toggle="tooltip" title="Linkedin">
-                                        <a class="fa fa-linkedin" href="@($"https://www.linkedin.com/sharing/share-offsite/?url=https://{Context.Request.Host}{Url.Action("Details", "Projects", new { slug = Model.Slug })}")" target="_blank"></a>
+                                        <a class="fa fa-linkedin" href="@($"https://www.linkedin.com/shareArticle?mini=true&url=https://{Context.Request.Host}{Url.Action("Details", "Projects", new { slug = Model.Slug })}")" target="_blank"></a>
                                     </li>
                                 </ul>
                             </div>

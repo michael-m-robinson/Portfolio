@@ -1,10 +1,12 @@
 #region Imports
 
+using System.IO.Compression;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using AspNetCore.ReCaptcha;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
 using Portfolio.Data;
@@ -87,6 +89,20 @@ builder.Services.AddBreadcrumbs(Assembly.GetExecutingAssembly(), options =>
 builder.Services.AddResponseCompression(options =>
 {
     options.EnableForHttps = true;
+    options.Providers.Add<BrotliCompressionProvider>();
+    options.Providers.Add<GzipCompressionProvider>();
+    ResponseCompressionDefaults.MimeTypes.Concat(
+        new[] { "image/svg+xml", "image/jpeg", "image/png" });
+});
+
+builder.Services.Configure<BrotliCompressionProviderOptions>(options =>
+{
+    options.Level = CompressionLevel.Fastest;
+});
+
+builder.Services.Configure<GzipCompressionProviderOptions>(options =>
+{
+    options.Level = CompressionLevel.SmallestSize;
 });
 
 var app = builder.Build();

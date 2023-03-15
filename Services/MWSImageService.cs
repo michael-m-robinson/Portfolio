@@ -1,6 +1,5 @@
 ﻿#region Imports
 
-using ImageMagick;
 using Portfolio.Services.Interfaces;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Formats.Png;
@@ -40,15 +39,14 @@ public class MWSImageService : IMWSImageService
 
     public async Task<byte[]> EncodeImageAsync(IFormFile image)
     {
-        if (image == default!) return null!;
-        var imageStream = new MemoryStream();
-        using MagickImage magickImage = new MagickImage(image.OpenReadStream());
-        magickImage.Format = magickImage.Format;
-        await magickImage.WriteAsync(imageStream);
-        var imageByteArray = imageStream.ToArray();
+        if (image.Length == 0) return null!;
         
+        await using var imageStream = image.OpenReadStream();
+        var bytes = new byte[image.Length];
+        imageStream.Read(bytes, 0, (int)image.Length);
         imageStream.Close();
-        return imageByteArray;
+        
+        return bytes;
     }
 
     #endregion

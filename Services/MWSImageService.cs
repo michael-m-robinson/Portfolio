@@ -1,7 +1,9 @@
 ﻿#region Imports
 
+using ImageMagick;
 using Portfolio.Services.Interfaces;
 using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.Formats.Png;
 using SixLabors.ImageSharp.Processing;
 
 #endregion
@@ -27,8 +29,7 @@ public class MWSImageService : IMWSImageService
         if (image == default!) return null!;
 
         var ms = new MemoryStream(image);
-        var sharpImage = Image.Load(ms, out var format);
-        var result = sharpImage.ToBase64String(format);
+        var result = $"data:image/*;base64,{Convert.ToBase64String(image)}";
 
         return result;
     }
@@ -41,10 +42,13 @@ public class MWSImageService : IMWSImageService
     {
         if (image == default!) return null!;
         var imageStream = new MemoryStream();
-        var sharpImage = Image.Load(image.OpenReadStream(), out var format);
-        await sharpImage.SaveAsPngAsync(imageStream);
-
-        return imageStream.ToArray();
+        using MagickImage magickImage = new MagickImage(image.OpenReadStream());
+        magickImage.Format = magickImage.Format;
+        await magickImage.WriteAsync(imageStream);
+        var imageByteArray = imageStream.ToArray();
+        
+        imageStream.Close();
+        return imageByteArray;
     }
 
     #endregion

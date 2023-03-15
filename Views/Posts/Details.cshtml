@@ -1,5 +1,6 @@
 @using Microsoft.AspNetCore.Identity
 @using System.Text
+
 @model PostIndexViewModel
 @inject IMWSImageService ImageService
 @inject IMWSPostService PostService
@@ -18,6 +19,7 @@
     var currentPostJson = Encoding.Unicode.GetString(Model.Post.PostBytes!);
     var authorUser = await UserManager.FindByIdAsync(Model.Post!.AuthorId);
     var commentBody = TempData["Comment"] as string;
+    var openGraphImage = $"https://{Context.Request.Host}/PostImages/{Model.Post.Slug}.png";
 }
 
 @Html.Hidden("CommentBody", commentBody)
@@ -66,7 +68,7 @@ else
                 <h3 class="post-title">@Model.Post.Title</h3>
             </header>
             <figure class="post-image img-radius m-b-45">
-                <img class="img-fluid" src="@ImageService.DecodeImage(Model.Post.Image!, Model.Post.ImageType!)" alt="@Model.Post.Title">
+                <img class="img-fluid" src="@openGraphImage?width=819&height=368">
             </figure>
             <div class="post-body">
                 <h3 class="post-title">@Model.Post.Title</h3>
@@ -316,10 +318,6 @@ else
 </div>
 </div>
 </main>
-
-@{
-    var openGraphImage = $"https://{Context.Request.Host}/ArticleImages/PostImages/{Model.Post.Slug}.png";
-}
 
 @section CustomCss
 {

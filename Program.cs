@@ -1,12 +1,10 @@
 #region Imports
 
-using System.IO.Compression;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using AspNetCore.ReCaptcha;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
 using Portfolio.Data;
@@ -17,10 +15,17 @@ using Portfolio.Services;
 using Portfolio.Services.Interfaces;
 using SixLabors.ImageSharp.Web.DependencyInjection;
 using SmartBreadcrumbs.Extensions;
+using System.IO;
 
 #endregion
 
-var builder = WebApplication.CreateBuilder(args);
+var webRootDirectory = "ArticleImages";
+var webRootPath = Directory.GetParent(Directory.GetCurrentDirectory()).FullName;
+
+var builder = WebApplication.CreateBuilder(new WebApplicationOptions() 
+{
+    WebRootPath = Path.Combine(webRootPath, webRootDirectory)
+});
 
 var configuration = new ConfigurationBuilder()
     .AddJsonFile("appsettings.json")
@@ -86,23 +91,10 @@ builder.Services.AddBreadcrumbs(Assembly.GetExecutingAssembly(), options =>
     options.ActiveLiClasses = "text-info";
     options.SeparatorElement = string.Empty;
 });
+
 builder.Services.AddResponseCompression(options =>
 {
     options.EnableForHttps = true;
-    options.Providers.Add<BrotliCompressionProvider>();
-    options.Providers.Add<GzipCompressionProvider>();
-    ResponseCompressionDefaults.MimeTypes.Concat(
-        new[] { "image/svg+xml", "image/jpeg", "image/png" });
-});
-
-builder.Services.Configure<BrotliCompressionProviderOptions>(options =>
-{
-    options.Level = CompressionLevel.Fastest;
-});
-
-builder.Services.Configure<GzipCompressionProviderOptions>(options =>
-{
-    options.Level = CompressionLevel.SmallestSize;
 });
 
 var app = builder.Build();
@@ -126,27 +118,26 @@ app.UseDefaultFiles();
 
 app.UseImageSharp();
 
-app.UseStaticFiles();
-
 var env = app.Environment;
+
 var osDirectory = string.Empty;
 if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX) 
     || RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
 {
     Console.WriteLine("We're on Unix!");
-    osDirectory = "../ArticleImages";
+    osDirectory = "wwwroot";
 }
 else
 {
     Console.WriteLine("We're on Windows!");
-    osDirectory = "..\\ArticleImages";
+    osDirectory = "wwwroot";
 }
 
-app.UseStaticFiles(new StaticFileOptions
-{
-    FileProvider = new PhysicalFileProvider(Path.Combine(env.ContentRootPath, osDirectory)),
-    RequestPath = "/ArticleImages"
-});
+var contentPath = Path.Combine(env.ContentRootPath, osDirectory);
+
+app.Environment.WebRootFileProvider = new CompositeFileProvider(new PhysicalFileProvider(env.WebRootPath), new PhysicalFileProvider(contentPath));
+
+app.UseStaticFiles();
 
 app.UseRouting();
 

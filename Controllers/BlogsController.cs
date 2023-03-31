@@ -5,7 +5,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Portfolio.Enums;
 using Portfolio.Models;
 using Portfolio.Models.Content;
 using Portfolio.Models.ViewModels;
@@ -25,29 +24,17 @@ public class BlogsController : Controller
     private readonly IMWSBlogService _blogService;
     private readonly IMWSBlogEntityService _blogEntityService;
     private readonly IMWSCategoryService _categoryService;
-    private readonly IMWSCivilityService _civilityService;
-    private readonly IMWSImageService _imageService;
-    private readonly IMWSPostService _postService;
-    private readonly IMWSTagService _tagService;
     private readonly UserManager<BlogUser> _userManager;
 
     public BlogsController(UserManager<BlogUser> userManager,
-        IMWSImageService imageService,
         IMWSBlogService blogService,
-        IMWSCivilityService civilityService,
         IMWSCategoryService categoryService,
-        IMWSTagService tagService,
-        IMWSPostService postService, 
         IMWSValidateService validateService, 
         IMWSBlogEntityService blogEntityService)
     {
         _userManager = userManager;
-        _imageService = imageService;
         _blogService = blogService;
-        _civilityService = civilityService;
         _categoryService = categoryService;
-        _tagService = tagService;
-        _postService = postService;
         _validateService = validateService;
         _blogEntityService = blogEntityService;
     }
@@ -287,7 +274,7 @@ public class BlogsController : Controller
                     return View(model);
                 }
             }
-            _blogEntityService.EditBlog(model, id);
+            await _blogEntityService.EditBlog(model, id);
             return RedirectToAction(nameof(Index));
         }
 

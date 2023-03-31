@@ -1,12 +1,9 @@
 using System.Security.Claims;
-using Microsoft.AspNetCore.Identity;
 using Portfolio.Enums;
 using Portfolio.Extensions;
-using Portfolio.Models;
 using Portfolio.Models.Content;
 using Portfolio.Models.ViewModels;
 using Portfolio.Services.Interfaces;
-using SmartBreadcrumbs.Nodes;
 using X.PagedList;
 
 namespace Portfolio.Services;

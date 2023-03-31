@@ -6,8 +6,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Portfolio.Enums;
-using Portfolio.Extensions;
 using Portfolio.Models;
+using Portfolio.Models.Content;
 using Portfolio.Models.ViewModels;
 using Portfolio.Services.Interfaces;
 using SmartBreadcrumbs.Attributes;
@@ -21,7 +21,9 @@ namespace Portfolio.Controllers;
 [Breadcrumb("Blogs")]
 public class BlogsController : Controller
 {
+    private readonly IMWSValidateService _validateService;
     private readonly IMWSBlogService _blogService;
+    private readonly IMWSBlogEntity _blogEntity;
     private readonly IMWSCategoryService _categoryService;
     private readonly IMWSCivilityService _civilityService;
     private readonly IMWSImageService _imageService;
@@ -35,7 +37,9 @@ public class BlogsController : Controller
         IMWSCivilityService civilityService,
         IMWSCategoryService categoryService,
         IMWSTagService tagService,
-        IMWSPostService postService)
+        IMWSPostService postService, 
+        IMWSValidateService validateService, 
+        IMWSBlogEntity blogEntity)
     {
         _userManager = userManager;
         _imageService = imageService;
@@ -44,6 +48,8 @@ public class BlogsController : Controller
         _categoryService = categoryService;
         _tagService = tagService;
         _postService = postService;
+        _validateService = validateService;
+        _blogEntity = blogEntity;
     }
 
     [TempData] public string StatusMessage { get; set; } = default!;
@@ -110,67 +116,25 @@ public class BlogsController : Controller
     {
         if (ModelState.IsValid)
         {
-            if (model.ImageFile is null)
+            var errorList = await _validateService.ValidateBlogCreateModel(model);
+            if (errorList.Count > 0)
             {
-                ModelState.AddModelError("ImageFile", "All blogs must have an image.");
-                model = GetBlogCreateEditViewModelData(model);
-                return View(model);
+                foreach (var error in errorList)
+                {
+                    ModelState.AddModelError(error.Key, error.Value);
+                    model = GetBlogCreateEditViewModelData(model);
+                    return View(model);
+                }
             }
-
-            model.Blog.Image = await _imageService.EncodeImageAsync(model.ImageFile);
-            model.Blog.ImageType = model.ImageFile.ContentType;
-
-            var error = _civilityService.IsCivil(model.Blog.Description).Verdict == false ||
-                        _civilityService.IsCivil(model.Blog.Name).Verdict == false;
-
-            if (model.CategoryValues is not null)
-            {
-                var newCategoryEntries =
-                    await _categoryService.RemoveDuplicateCategoriesAsync(model.Blog.Id, model.CategoryValues);
-
-                foreach (var category in newCategoryEntries)
-                    if (_civilityService.IsCivil(category).Verdict == false ||
-                        (await _categoryService.IsCategoryUnique(model.Blog.Id, category) == false &&
-                         category != "All Posts"))
-                    {
-                        error = true;
-                        break;
-                    }
-            }
-
-            if (error)
-            {
-                ModelState.AddModelError("",
-                    "There is an error, please check entries for bag language, and make sure all required fields are complete.");
-                model = GetBlogCreateEditViewModelData(model);
-                return View(model);
-            }
-
-            model.Blog.Created = DateTimeOffset.Now;
-            model.Blog.AuthorId = _userManager.GetUserId(User)!;
-            model.Blog.Slug = model.Blog.Name.Slugify();
-
-            if (model.Blog?.Slug is not null &&
-                _blogService.IsSlugUniqueAsync(model.Blog.Slug) == false)
-            {
-                ModelState.AddModelError("Blog.Name", "Your blog name is taken, please choose another.");
-                model = GetBlogCreateEditViewModelData(model);
-                return View(model);
-            }
-
-            await _blogService.AddBlogAsync(model.Blog);
-            model.CategoryValues?.Add("All Posts");
-            if (model?.CategoryValues is not null)
-                await _categoryService.AddCategoriesAsync(model.Blog.Id, model.CategoryValues);
-
+            await _blogEntity.CreateBlog(model);
             return RedirectToAction(nameof(Index));
         }
 
         //Model state is not valid, return user to create view.
-        model = GetBlogCreateEditViewModelData(model);
+        
         ModelState.AddModelError("",
             "There has been an error if this continues, please contact the administrator.");
-
+        model = GetBlogCreateEditViewModelData(model);
         return View(model);
     }
 
@@ -254,36 +218,13 @@ public class BlogsController : Controller
     [Route("/Blog/{slug}/Page/{page}")]
     public async Task<IActionResult> Details(string slug, int? page)
     {
-        if ((await _blogService.GetBlogBySlugAsync(slug)).Id == new Guid()) return NotFound();
-        var model = new BlogPostViewModel
-        {
-            Blog = await _blogService.GetBlogBySlugAsync(slug)
-        };
-
-        var blogsNode = new MvcBreadcrumbNode("AllBlogs", "Blogs", "Blogs");
-
-        var blogNode = new MvcBreadcrumbNode("Details", "Blogs", model.Blog.Name)
-        {
-            RouteValues = new { slug = model.Blog.Slug },
-            Parent = blogsNode
-        };
-
-        ViewData["BreadcrumbNode"] = blogNode;
-
-        var productionReadyArticles =
-            await model.Blog.Posts.Where(p => p.ReadyStatus == ReadyStatus.ProductionReady).ToListAsync();
-
-        var pageNumber = page ?? 1;
-        var pageSize = 3;
-
-        model.PaginatedPosts = await productionReadyArticles.ToPagedListAsync(pageNumber, pageSize);
-        model.Tags = await _tagService.GetTopTwentyBlogTagsAsync(model.Blog.Id);
-        model.CurrentAction = "Details";
-
-        model.RecentArticles = await model.PaginatedPosts.OrderByDescending(p => p.Created)
-            .Where(p => p.ReadyStatus == ReadyStatus.ProductionReady)
-            .Take(4).ToListAsync();
-
+        var currentBlog = await _blogService.GetBlogBySlugAsync(slug);
+        if (currentBlog.Id == new Guid()) return NotFound();
+        
+        SetBlogDetailsBreadCrumbs(currentBlog);
+        
+        var model = await _blogEntity.ListBlog(currentBlog, page);
+        
         return View(model);
     }
 
@@ -306,23 +247,7 @@ public class BlogsController : Controller
             if (categoryName is null) return NotFound();
 
             model.Blog = await _blogService.GetBlogBySlugAsync(slug);
-
-            var blogsNode = new MvcBreadcrumbNode("AllBlogs", "Blogs", "Blogs");
-
-            var blogNode = new MvcBreadcrumbNode("Details", "Blogs", model.Blog.Name)
-            {
-                RouteValues = new { slug = model.Blog.Slug },
-                Parent = blogsNode
-            };
-
-            var categoryNode = new MvcBreadcrumbNode("DetailsByCategory", "Blogs", categoryName)
-            {
-                RouteValues = new { slug, page, categoryName },
-                Parent = blogNode
-            };
-
-            ViewData["BreadcrumbNode"] = categoryNode;
-
+            SetBlogCategoryDetailsBreadCrumbs(model.Blog, slug, page, categoryName);
             model.RecentArticles = await (await _postService.GetPostsByBlogId(model.Blog.Id))
                 .Where(p => p.ReadyStatus == ReadyStatus.ProductionReady)
                 .OrderByDescending(p => p.Created).Take(4).ToListAsync();
@@ -378,69 +303,20 @@ public class BlogsController : Controller
     public async Task<IActionResult> Edit(Guid id, [FromForm] BlogCreateEditViewModel model)
     {
         if ((await _blogService.GetBlogAsync(id)).Id == new Guid()) return NotFound();
-        var blogToUpdate = await _blogService.GetBlogAsync(id);
-
         if (ModelState.IsValid)
         {
-            blogToUpdate!.Updated = DateTimeOffset.Now;
-            blogToUpdate.Created = model.Blog.Created;
-            blogToUpdate.Name = model.Blog.Name;
-            blogToUpdate.Description = model.Blog.Description;
-            blogToUpdate.AuthorId = model.Blog.AuthorId;
-
-            if (model.ImageFile is not null)
+            model.Blog.Id = id;
+            var errorList = await _validateService.ValidateBlogEditModel(model);
+            if (errorList.Count > 0)
             {
-                model.Blog.ImageType = model.ImageFile!.ContentType;
-                model.Blog.Image = await _imageService.EncodeImageAsync(model.ImageFile);
-                blogToUpdate.ImageType = model.Blog.ImageType;
-                blogToUpdate.Image = model.Blog.Image;
+                foreach (var error in errorList)
+                {
+                    ModelState.AddModelError(error.Key, error.Value);
+                    model = GetBlogCreateEditViewModelData(model);
+                    return View(model);
+                }
             }
-
-            var error = _civilityService.IsCivil(model.Blog.Name).Verdict == false ||
-                        _civilityService.IsCivil(model.Blog.Description).Verdict == false;
-
-            var newCategoryEntries = new List<string>();
-            if (model.CategoryValues is not null)
-            {
-                newCategoryEntries =
-                    await _categoryService.RemoveDuplicateCategoriesAsync(model.Blog.Id, model.CategoryValues);
-
-                foreach (var category in newCategoryEntries)
-                    if (_civilityService.IsCivil(category).Verdict == false ||
-                        (await _categoryService.IsCategoryUnique(model.Blog.Id, category) == false &&
-                         category != "All Posts"))
-                    {
-                        error = true;
-                        break;
-                    }
-            }
-
-            if (error)
-            {
-                ModelState.AddModelError("",
-                    "There is an error, please check entries for bag language, and make sure all required fields are complete.");
-                model = GetBlogCreateEditViewModelData(model);
-                return View(model);
-            }
-
-            model.Blog.Slug = model.Blog.Name.Slugify();
-            if (blogToUpdate.Slug != model.Blog.Slug &&
-                _blogService.IsSlugUniqueAsync(model.Blog.Slug!) == false)
-            {
-                model = GetBlogCreateEditViewModelData(model);
-                ModelState.AddModelError("", "Your blog name is taken, please choose another.");
-                return View(model);
-            }
-
-            blogToUpdate.Slug = model.Blog.Slug;
-
-            await _blogService.UpdateBlogAsync(blogToUpdate);
-            if (newCategoryEntries.Any())
-            {
-                await _categoryService.RemoveStaleCategories(model.Blog);
-                await _categoryService.AddCategoriesAsync(id, newCategoryEntries);
-            }
-
+            _blogEntity.EditBlog(model, id);
             return RedirectToAction(nameof(Index));
         }
 
@@ -639,5 +515,36 @@ public class BlogsController : Controller
         model.Blog.ImageType = null;
 
         return model;
+    }
+
+    private void SetBlogDetailsBreadCrumbs(Blog model)
+    {
+        var blogsNode = new MvcBreadcrumbNode("AllBlogs", "Blogs", "Blogs");
+        var blogNode = new MvcBreadcrumbNode("Details", "Blogs", model.Name)
+        {
+            RouteValues = new { slug = model.Slug },
+            Parent = blogsNode
+        };
+        
+        ViewData["BreadcrumbNode"] = blogNode;
+    }
+
+    private void SetBlogCategoryDetailsBreadCrumbs(Blog model, string slug, int? page, string categoryName)
+    {
+        var blogsNode = new MvcBreadcrumbNode("AllBlogs", "Blogs", "Blogs");
+
+        var blogNode = new MvcBreadcrumbNode("Details", "Blogs", model.Name)
+        {
+            RouteValues = new { slug = model.Slug },
+            Parent = blogsNode
+        };
+
+        var categoryNode = new MvcBreadcrumbNode("DetailsByCategory", "Blogs", categoryName)
+        {
+            RouteValues = new { slug, page, categoryName },
+            Parent = blogNode
+        };
+
+        ViewData["BreadcrumbNode"] = categoryNode;
     }
 }

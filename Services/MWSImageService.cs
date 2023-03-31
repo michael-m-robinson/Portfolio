@@ -2,7 +2,6 @@
 
 using Portfolio.Services.Interfaces;
 using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.Formats.Png;
 using SixLabors.ImageSharp.Processing;
 
 #endregion
@@ -26,8 +25,6 @@ public class MWSImageService : IMWSImageService
     public string DecodeImage(byte[] image, string contentType)
     {
         if (image == default!) return null!;
-
-        var ms = new MemoryStream(image);
         var result = $"data:image/*;base64,{Convert.ToBase64String(image)}";
 
         return result;
@@ -40,7 +37,6 @@ public class MWSImageService : IMWSImageService
     public async Task<byte[]> EncodeImageAsync(IFormFile image)
     {
         if (image.Length == 0) return null!;
-        
         await using var imageStream = image.OpenReadStream();
         var bytes = new byte[image.Length];
         imageStream.Read(bytes, 0, (int)image.Length);
@@ -53,11 +49,11 @@ public class MWSImageService : IMWSImageService
 
     #region Encode image URL
 
-    public async Task<byte[]> EncodeImageURLAsync(string imageURL)
+    public async Task<byte[]> EncodeImageURLAsync(string imageUrl)
     {
         var client = _httpClient.CreateClient();
-        var response = await client.GetAsync(imageURL);
-        using var stream = await response.Content.ReadAsStreamAsync();
+        var response = await client.GetAsync(imageUrl);
+        await using var stream = await response.Content.ReadAsStreamAsync();
 
         var ms = new MemoryStream();
         await stream.CopyToAsync(ms);

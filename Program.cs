@@ -81,7 +81,7 @@ builder.Services.AddScoped<IMWSProjectService, MWSProjectService>();
 builder.Services.AddScoped<IMWSProjectImageService, MWSProjectImageService>();
 builder.Services.AddScoped<IMWSTagService, MWSTagService>();
 builder.Services.AddScoped<IMWSOpenGraphService, MWSOpenGraphService>();
-builder.Services.AddScoped<IMWSBlogEntity, MWSBlogEntity>();
+builder.Services.AddScoped<IMWSBlogEntityService, MWSBlogEntityService>();
 builder.Services.AddScoped<IMWSValidateService, MWSValidateService>();
 builder.Services.AddImageSharp();
 builder.Services.AddBreadcrumbs(Assembly.GetExecutingAssembly(), options =>

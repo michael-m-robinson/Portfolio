@@ -23,7 +23,7 @@ public class BlogsController : Controller
 {
     private readonly IMWSValidateService _validateService;
     private readonly IMWSBlogService _blogService;
-    private readonly IMWSBlogEntity _blogEntity;
+    private readonly IMWSBlogEntityService _blogEntityService;
     private readonly IMWSCategoryService _categoryService;
     private readonly IMWSCivilityService _civilityService;
     private readonly IMWSImageService _imageService;
@@ -39,7 +39,7 @@ public class BlogsController : Controller
         IMWSTagService tagService,
         IMWSPostService postService, 
         IMWSValidateService validateService, 
-        IMWSBlogEntity blogEntity)
+        IMWSBlogEntityService blogEntityService)
     {
         _userManager = userManager;
         _imageService = imageService;
@@ -49,7 +49,7 @@ public class BlogsController : Controller
         _tagService = tagService;
         _postService = postService;
         _validateService = validateService;
-        _blogEntity = blogEntity;
+        _blogEntityService = blogEntityService;
     }
 
     [TempData] public string StatusMessage { get; set; } = default!;
@@ -61,13 +61,8 @@ public class BlogsController : Controller
     [Route("/Blogs/Page/{page}")]
     public async Task<IActionResult> AllBlogs(int? page)
     {
-        var pageNumber = page ?? 1;
-        var pageSize = 6;
-
-        var blogs = (await _blogService.GetAllBlogsAsync())
-            .Where(b => b.Posts.Any(p => p.ReadyStatus == ReadyStatus.ProductionReady));
-
-        return View("Index", await blogs.ToPagedListAsync(pageNumber, pageSize));
+        var blogList = await _blogEntityService.ListAllBlogs(page);
+        return View("Index", blogList);
     }
 
     #endregion
@@ -101,7 +96,6 @@ public class BlogsController : Controller
     public IActionResult Create()
     {
         var model = new BlogCreateEditViewModel();
-
         return View(model);
     }
 
@@ -126,7 +120,7 @@ public class BlogsController : Controller
                     return View(model);
                 }
             }
-            await _blogEntity.CreateBlog(model);
+            await _blogEntityService.CreateBlog(model);
             return RedirectToAction(nameof(Index));
         }
 
@@ -222,8 +216,7 @@ public class BlogsController : Controller
         if (currentBlog.Id == new Guid()) return NotFound();
         
         SetBlogDetailsBreadCrumbs(currentBlog);
-        
-        var model = await _blogEntity.ListBlog(currentBlog, page);
+        var model = await _blogEntityService.ListBlog(currentBlog, page);
         
         return View(model);
     }
@@ -237,34 +230,14 @@ public class BlogsController : Controller
     [Breadcrumb("Category")]
     public async Task<IActionResult> DetailsByCategory(string slug, int? page, string categoryName)
     {
-        var pageNumber = page ?? 1;
-        var pageSize = 3;
-        var model = new BlogPostViewModel();
-
+        var currentBlog = await _blogService.GetBlogBySlugAsync(slug);
+        var model = await _blogEntityService.ListBlogByCategory(currentBlog, page, categoryName);
+        
         if (ModelState.IsValid)
         {
-            if ((await _blogService.GetBlogBySlugAsync(slug)).Id == new Guid()) return NotFound();
-            if (categoryName is null) return NotFound();
-
-            model.Blog = await _blogService.GetBlogBySlugAsync(slug);
+            if (currentBlog.Id == new Guid()) return NotFound();
+            if (string.IsNullOrEmpty(categoryName)) return NotFound();
             SetBlogCategoryDetailsBreadCrumbs(model.Blog, slug, page, categoryName);
-            model.RecentArticles = await (await _postService.GetPostsByBlogId(model.Blog.Id))
-                .Where(p => p.ReadyStatus == ReadyStatus.ProductionReady)
-                .OrderByDescending(p => p.Created).Take(4).ToListAsync();
-
-            model.CategoryName = categoryName;
-            model.Category = await _categoryService.GetCategoryByNameAsync(model.Blog.Id, categoryName);
-
-            model.CurrentAction = "DetailsByCategory";
-
-            model.Tags = await _tagService.GetTopTwentyBlogTagsAsync(model.Blog.Id);
-
-            model.PaginatedPosts =
-                await (await _postService.GetPostsByCategory(model.Blog.Id, model.Category))
-                    .Where(p => p.ReadyStatus == ReadyStatus.ProductionReady)
-                    .ToPagedListAsync(
-                        pageNumber, pageSize);
-
             return View("Details", model);
         }
 
@@ -281,7 +254,6 @@ public class BlogsController : Controller
     public async Task<IActionResult> Edit(Guid id)
     {
         if ((await _blogService.GetBlogAsync(id)).Id == new Guid()) return NotFound();
-
         var model = new BlogCreateEditViewModel
         {
             Blog = await _blogService.GetBlogAsync(id)
@@ -289,7 +261,6 @@ public class BlogsController : Controller
 
         model.CategoryValues = model.Blog.Categories!.Select(c => c.Name).OrderBy(c => c).ToList();
         model.AuthorId = _userManager.GetUserId(User);
-
         return View(model);
     }
 
@@ -316,7 +287,7 @@ public class BlogsController : Controller
                     return View(model);
                 }
             }
-            _blogEntity.EditBlog(model, id);
+            _blogEntityService.EditBlog(model, id);
             return RedirectToAction(nameof(Index));
         }
 
@@ -372,43 +343,12 @@ public class BlogsController : Controller
     [Route("Blogs/{slug}/PostSearch/{term}/Page/{page}")]
     public async Task<IActionResult> PostSearch(string term, string slug, int? page)
     {
-        var model = new BlogPostViewModel();
-        var pageNumber = page ?? 1;
-        var pageSize = 3;
-
         if (term == null) return BadRequest();
-
-        model.Blog = await _blogService.GetBlogBySlugAsync(slug);
-
+        var model = await _blogEntityService.ListBlogPostsBySearch(term, slug, page);
         if (model.Blog.Id == new Guid()) return NotFound();
-
-        var blogNode = new MvcBreadcrumbNode("Details", "Blogs", model.Blog.Name)
-        {
-            RouteValues = new { slug = model.Blog.Slug }
-        };
-
-        var searchNode = new MvcBreadcrumbNode("PostSearch", "Blogs", term)
-        {
-            RouteValues = new { term, slug, page },
-            Parent = blogNode
-        };
-
-        ViewData["BreadcrumbNode"] = searchNode;
-
-        model.PaginatedPosts = await model.Blog.Posts
-            .Where(p => p.Title.ToLower().Contains(term.ToLower()))
-            .Where(p => p.ReadyStatus == ReadyStatus.ProductionReady)
-            .ToPagedListAsync(pageNumber, pageSize);
-
-        model.RecentArticles = await (await _postService.GetPostsByBlogId(model.Blog.Id))
-            .Where(p => p.ReadyStatus == ReadyStatus.ProductionReady)
-            .OrderByDescending(p => p.Created).Take(4)
-            .ToListAsync();
-
-        model.Tags = await _tagService.GetTopTwentyBlogTagsAsync(model.Blog.Id);
-        model.CurrentAction = "PostSearch";
+        SetBlogPostSearchBreadCrumbs(model.Blog, slug, page, term);
         ViewBag.SearchTerm = term;
-
+        
         return View("Details", model);
     }
 
@@ -421,45 +361,10 @@ public class BlogsController : Controller
     [ActionName("PostSearch")]
     public async Task<IActionResult> PostSearchPost(string term, string slug, int? page)
     {
-        var model = new BlogPostViewModel();
-        var pageNumber = page ?? 1;
-        var pageSize = 3;
-
         if (term == null) return BadRequest();
-
-        model.Blog = await _blogService.GetBlogBySlugAsync(slug);
-
+        var model = await _blogEntityService.ListBlogPostsBySearch(term, slug, page);
         if (model.Blog.Id == new Guid()) return NotFound();
-
-        var blogsNode = new MvcBreadcrumbNode("AllBlogs", "Blogs", "Blogs");
-
-        var blogNode = new MvcBreadcrumbNode("Details", "Blogs", model.Blog.Name)
-        {
-            RouteValues = new { slug = model.Blog.Slug },
-            Parent = blogsNode
-        };
-
-        var searchNode = new MvcBreadcrumbNode("PostSearchPost", "Blogs", term)
-        {
-            RouteValues = new { term, slug },
-            Parent = blogNode
-        };
-
-        ViewData["BreadcrumbNode"] = searchNode;
-
-        model.PaginatedPosts = await model.Blog.Posts
-            .Where(p => p.Title.ToLower().Contains(term.ToLower()) ||
-                        p.Abstract.ToLower().Contains(term.ToLower()))
-            .Where(p => p.ReadyStatus == ReadyStatus.ProductionReady)
-            .ToPagedListAsync(pageNumber, pageSize);
-
-        model.RecentArticles = await (await _postService.GetPostsByBlogId(model.Blog.Id))
-            .Where(p => p.ReadyStatus == ReadyStatus.ProductionReady)
-            .OrderByDescending(p => p.Created).Take(4)
-            .ToListAsync();
-
-        model.Tags = await _tagService.GetTopTwentyBlogTagsAsync(model.Blog.Id);
-        model.CurrentAction = "PostSearch";
+        SetBlogPostSearchBreadCrumbs(model.Blog, slug, page, term);
         ViewBag.SearchTerm = term;
 
         return View("Details", model);
@@ -473,36 +378,9 @@ public class BlogsController : Controller
     [Route("/Blog/{slug}/Tag/{tag}/Page/{page}")]
     public async Task<IActionResult> Tag(int? page, string tag, string slug)
     {
-        var model = new BlogPostViewModel();
-        var pageNumber = page ?? 1;
-        var pageSize = 3;
-
-        model.Blog = await _blogService.GetBlogBySlugAsync(slug);
-        var tagPosts = (await _postService.GetPostsByTag(tag, model.Blog.Id))
-            .Where(p => p.ReadyStatus == ReadyStatus.ProductionReady);
-
-        var blogsNode = new MvcBreadcrumbNode("AllBlogs", "Blogs", "Blogs");
-
-        var blogNode = new MvcBreadcrumbNode("Details", "Blogs", model.Blog.Name)
-        {
-            RouteValues = new { slug = model.Blog.Slug },
-            Parent = blogsNode
-        };
-
-        var tagNode = new MvcBreadcrumbNode("Tag", "Blogs", tag)
-        {
-            RouteValues = new { tag, slug },
-            Parent = blogNode
-        };
-
-        ViewData["BreadcrumbNode"] = tagNode;
-
-        model.PaginatedPosts = await tagPosts.ToPagedListAsync(pageNumber, pageSize);
-        model.RecentArticles = await _postService.GetTopFivePostsByDateAsync(model.Blog.Id);
-        model.Tags = await _tagService.GetTopTwentyBlogTagsAsync(model.Blog.Id);
-        model.CurrentAction = "Tag";
         ViewBag.Tag = tag;
-
+        var model = await _blogEntityService.ListBlogByTag(tag, slug, page);
+        SetBlogTagBreadCrumbs(model.Blog, tag, slug);
         return View("Details", model);
     }
 
@@ -546,5 +424,40 @@ public class BlogsController : Controller
         };
 
         ViewData["BreadcrumbNode"] = categoryNode;
+    }
+
+    private void SetBlogPostSearchBreadCrumbs(Blog model, string slug, int? page, string term)
+    {
+        var blogNode = new MvcBreadcrumbNode("Details", "Blogs", model.Name)
+        {
+            RouteValues = new { slug = model.Slug }
+        };
+
+        var searchNode = new MvcBreadcrumbNode("PostSearch", "Blogs", term)
+        {
+            RouteValues = new { term, slug, page },
+            Parent = blogNode
+        };
+
+        ViewData["BreadcrumbNode"] = searchNode;
+    }
+
+    private void SetBlogTagBreadCrumbs(Blog model, string tag, string slug)
+    {
+        var blogsNode = new MvcBreadcrumbNode("AllBlogs", "Blogs", "Blogs");
+
+        var blogNode = new MvcBreadcrumbNode("Details", "Blogs", model.Name)
+        {
+            RouteValues = new { slug = model.Slug },
+            Parent = blogsNode
+        };
+
+        var tagNode = new MvcBreadcrumbNode("Tag", "Blogs", tag)
+        {
+            RouteValues = new { tag, slug },
+            Parent = blogNode
+        };
+
+        ViewData["BreadcrumbNode"] = tagNode;
     }
 }

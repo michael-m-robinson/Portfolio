@@ -5,6 +5,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Portfolio.Extensions;
 using Portfolio.Models;
 using Portfolio.Models.Content;
 using Portfolio.Models.ViewModels;
@@ -97,13 +98,14 @@ public class BlogsController : Controller
     {
         if (ModelState.IsValid)
         {
+            model.Blog.Slug = model.Blog.Name.Slugify();
             var errorList = await _validateService.ValidateBlogCreateModel(model);
             if (errorList.Count > 0)
             {
                 foreach (var error in errorList)
                 {
                     ModelState.AddModelError(error.Key, error.Value);
-                    model = GetBlogCreateEditViewModelData(model);
+                    model = await GetBlogCreateEditViewModelData(model);
                     return View(model);
                 }
             }
@@ -115,7 +117,7 @@ public class BlogsController : Controller
         
         ModelState.AddModelError("",
             "There has been an error if this continues, please contact the administrator.");
-        model = GetBlogCreateEditViewModelData(model);
+        model = await GetBlogCreateEditViewModelData(model);
         return View(model);
     }
 
@@ -264,13 +266,14 @@ public class BlogsController : Controller
         if (ModelState.IsValid)
         {
             model.Blog.Id = id;
+            model.Blog.Slug = model.Blog.Name.Slugify();
             var errorList = await _validateService.ValidateBlogEditModel(model);
             if (errorList.Count > 0)
             {
                 foreach (var error in errorList)
                 {
                     ModelState.AddModelError(error.Key, error.Value);
-                    model = GetBlogCreateEditViewModelData(model);
+                    model = await GetBlogCreateEditViewModelData(model);
                     return View(model);
                 }
             }
@@ -280,7 +283,7 @@ public class BlogsController : Controller
 
         ModelState.AddModelError("",
             "There has been an error if this continues, please contact the administrator.");
-        model = GetBlogCreateEditViewModelData(model);
+        model = await GetBlogCreateEditViewModelData(model);
         return View(model);
     }
 
@@ -373,11 +376,14 @@ public class BlogsController : Controller
 
     #endregion
 
-    private BlogCreateEditViewModel GetBlogCreateEditViewModelData(BlogCreateEditViewModel model)
+    private async Task<BlogCreateEditViewModel> GetBlogCreateEditViewModelData(BlogCreateEditViewModel model)
     {
+        model.Blog = await _blogService.GetBlogAsync(model.Blog.Id);
         model.ImageFile = default!;
         model.Blog.Image = null;
         model.Blog.ImageType = null;
+        model.CategoryValues = model.Blog.Categories!.Select(c => c.Name).OrderBy(c => c).ToList();
+        model.AuthorId = _userManager.GetUserId(User);
 
         return model;
     }

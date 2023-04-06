@@ -29,6 +29,7 @@
                     <div asp-validation-summary="ModelOnly" class="text-danger"></div>
                     <input type="hidden" asp-for="Blog.Id"/>
                     <input type="hidden" asp-for="Blog.AuthorId"/>
+                    <input type="hidden" asp-for="Blog.Slug" />
                     <div class="form-group">
                         <label asp-for="Blog.Name" class="control-label"></label>
                         <input asp-for="Blog.Name" class="form-control"/>
@@ -81,6 +82,7 @@
                                 <div class="row">
                                     <div class="col">
                                         <input type="text" class="form-control" id="CategoryEntry"/>
+                                        <span asp-validation-for="CategoryValues" class="text-danger"></span>
                                     </div>
                                 </div>
                                 <div class="row">

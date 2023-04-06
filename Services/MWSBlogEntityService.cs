@@ -29,20 +29,21 @@ public class MWSBlogEntityService: IMWSBlogEntityService
 
     public async Task CreateBlog(BlogCreateEditViewModel model)
     {
-        model.Blog.Image = await _imageService.EncodeImageAsync(model.ImageFile);
-        model.Blog.ImageType = model.ImageFile.ContentType;
-        model.CategoryValues =
-            await _categoryService.RemoveDuplicateCategoriesAsync(model.Blog.Id, model.CategoryValues);
+        model.Blog.Image = await _imageService.EncodeImageAsync(model.ImageFile!);
+        model.Blog.ImageType = model.ImageFile!.ContentType;
         model.Blog.Created = DateTimeOffset.Now;
-        model.Blog.AuthorId = _httpContextAccessor.HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
-        model.Blog.Slug = model.Blog.Name.Slugify();
-            
+        model.Blog.AuthorId = _httpContextAccessor.HttpContext?.User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+        model.CategoryValues = (model.CategoryValues == null) ? new() : model.CategoryValues;
+        
         await _blogService.AddBlogAsync(model.Blog);
-            
-        model.CategoryValues?.Add("All Posts");
-            
-        if (model?.CategoryValues is not null)
-            await _categoryService.AddCategoriesAsync(model.Blog.Id, model.CategoryValues);
+        
+        if (model.CategoryValues.Count == 0)
+        {
+            model.CategoryValues.Add("All Posts");
+        }
+        model.CategoryValues =
+        await _categoryService.RemoveDuplicateCategoriesAsync(model.Blog.Id, model.CategoryValues);
+        await _categoryService.AddCategoriesAsync(model.Blog.Id, model.CategoryValues);
     }
 
     public async Task EditBlog(BlogCreateEditViewModel model, Guid id)
@@ -55,29 +56,21 @@ public class MWSBlogEntityService: IMWSBlogEntityService
             updatedBlog.ImageType = model.ImageFile!.ContentType;
             updatedBlog.Image = await _imageService.EncodeImageAsync(model.ImageFile);
         }
-        updatedBlog.Slug = model.Blog.Slug;
-        
-        var newCategoryEntries =
-            await _categoryService.RemoveDuplicateCategoriesAsync(model.Blog.Id, model.CategoryValues);
-        
         await _blogService.UpdateBlogAsync(updatedBlog);
-        if (newCategoryEntries.Any())
-        {
-            await _categoryService.RemoveStaleCategories(model.Blog);
-            await _categoryService.AddCategoriesAsync(id, newCategoryEntries);
-        }
+        var newCategoryEntries =
+        await _categoryService.RemoveDuplicateCategoriesAsync(model.Blog.Id, model.CategoryValues!);
+        await _categoryService.RemoveStaleCategories(model.Blog);
+        await _categoryService.AddCategoriesAsync(id, newCategoryEntries);
     }
 
     public async Task<IPagedList<Blog>> ListAllBlogs(int? page)
     {
         var pageNumber = page ?? 1;
         var pageSize = 6;
-
         var blogs = (await _blogService.GetAllBlogsAsync())
             .Where(b => b.Posts.Any(p => p.ReadyStatus == ReadyStatus.ProductionReady));
 
         var blogList = await blogs.ToPagedListAsync(pageNumber, pageSize);
-
         return blogList;
     }
 

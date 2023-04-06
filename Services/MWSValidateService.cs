@@ -43,14 +43,14 @@ public class MWSValidateService: IMWSValidateService
         if (model.CategoryValues is not null)
         {
             model.CategoryValues =
-                await _categoryService.RemoveDuplicateCategoriesAsync(model.Blog.Id, model.CategoryValues);
+                await _categoryService.RemoveDuplicateCategoriesAsync(model.Blog!.Id, model.CategoryValues);
 
             foreach (var category in model.CategoryValues)
                 if (_civilityService.IsCivil(category).Verdict == false ||
                     (await _categoryService.IsCategoryUnique(model.Blog.Id, category) == false &&
                      category != "All Posts"))
                 {
-                    errorList.Add("CategoryValues", "At least one category already exists. Please revise the list.");
+                    errorList.Add("CategoryValues", "There was a problem with your list, please revise.");
                     break;
                 }
         }
@@ -81,7 +81,7 @@ public class MWSValidateService: IMWSValidateService
                     (await _categoryService.IsCategoryUnique(model.Blog.Id, category) == false &&
                      category != "All Posts"))
                 {
-                    errorList.Add("CategoryValues", "At least one category already exists. Please revise the list.");
+                    errorList.Add("CategoryValues", "There was a problem with your list, please revise.");
                     break;
                 }
         }
@@ -89,7 +89,7 @@ public class MWSValidateService: IMWSValidateService
         if ((await _blogService.GetBlogAsync(model.Blog.Id)).Slug != model.Blog.Slug &&
             _blogService.IsSlugUniqueAsync(model.Blog.Slug!) == false)
         {
-            errorList.Add("", "Your blog name is taken, please choose another.");
+            errorList.Add("Blog.Name", "Your blog name is taken, please choose another.");
         }
 
         return errorList;

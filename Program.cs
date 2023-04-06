@@ -20,11 +20,11 @@ using System.IO;
 #endregion
 
 var webRootDirectory = "ArticleImages";
-var webRootPath = Directory.GetParent(Directory.GetCurrentDirectory()).FullName;
+var webRootPath = Directory.GetParent(Directory.GetCurrentDirectory())?.FullName;
 
 var builder = WebApplication.CreateBuilder(new WebApplicationOptions() 
 {
-    WebRootPath = Path.Combine(webRootPath, webRootDirectory)
+    WebRootPath = Path.Combine(webRootPath!, webRootDirectory)
 });
 
 var configuration = new ConfigurationBuilder()

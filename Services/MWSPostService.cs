@@ -74,6 +74,8 @@ public class MWSPostService : IMWSPostService
             .ThenInclude(c => c.Author)
             .Include(p => p.Tags)
             .Include(p => p.Category)
+            .Include(p => p.Blog)
+            .ThenInclude(b => b.Author)
             .FirstOrDefaultAsync(p => p.Id == id);
 
         return result ?? new Post();

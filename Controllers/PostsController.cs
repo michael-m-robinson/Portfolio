@@ -270,10 +270,17 @@ public class PostsController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Edit(Guid id, [FromForm] PostEditViewModel model)
     {
-        if ((await _postService.GetPostByIdAsync(id)).Id == new Guid()) return NotFound();
+        var currentPost = await _postService.GetPostByIdAsync(id);
+        if (currentPost.Id == new Guid()) return NotFound();
+
+        //Populate post image
+        model.Post.Image = currentPost.Image;
+        model.Post.ImageType = currentPost.ImageType;
+
         if (ModelState.IsValid)
         {
             var errorList = await _validateService.ValidatePostEditModel(model);
+
             if (errorList.Count > 0)
             {
                 foreach (var error in errorList)

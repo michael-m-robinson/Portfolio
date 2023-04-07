@@ -13,7 +13,8 @@
     var userId = UserManager.GetUserId(User);
     ViewData["Title"] = "Mike Robinson's Site - Edit";
     Layout = "~/Views/Shared/_Layout.cshtml";
-    var blogUserId = UserManager.GetUserId(User);
+    var author = await UserManager.GetUserAsync(User);
+    var blogUserId = author?.Id;
 
     IEnumerable<SelectListItem> tagItems = new List<SelectListItem>();
     if (Model.TagValues is not null)
@@ -35,11 +36,18 @@
             <div class="col-md-8">
                 <form id="postForm" asp-action="Edit" enctype="multipart/form-data">
                     <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-                    <input type="hidden" asp-for="Post!.AuthorId"/>
+                    <input type="hidden" asp-for="Post!.AuthorId" />
+                    <input type="hidden" asp-for="Post!.Author.LastName" />
+                    <input type="hidden" asp-for="Post!.Author.FirstName" />
                     <input type="hidden" asp-for="Post!.BlogId"/>
                     <input type="hidden" asp-for="Post!.Created"/>
                     <input type="hidden" asp-for="Post!.Id"/>
                     <input type="hidden" asp-for="Post!.CategoryId"/>
+                    <input type="hidden" asp-for="Post!.Blog.Name" />
+                    <input type="hidden" asp-for="Post!.Blog.Description" />
+                    <input type="hidden" asp-for="Post!.Blog.AuthorId" value="@author?.Id" />
+
+                    
                     <div class="form-group">
                         <label asp-for="Post!.Title" class="control-label"></label>
                         <input asp-for="Post!.Title" class="form-control"/>

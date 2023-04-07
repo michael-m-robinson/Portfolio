@@ -35,29 +35,26 @@ public sealed class BlogUser : IdentityUser
 
     public string? ImageType { get; set; } = default!;
 
-    // [System.Text.Json.Serialization.JsonIgnore]
-    // public string? ContentType { get; set; }
-
     //Social media URLS
     [StringLength(200, ErrorMessage = "The {0} must be at least {2} and no more than {1} characters long.",
         MinimumLength = 2)]
-    public string FacebookUrl { get; set; } = "";
+    public string? FacebookUrl { get; set; }
 
     [StringLength(200, ErrorMessage = "The {0} must be at least {2} and no more than {1} characters long.",
         MinimumLength = 2)]
-    public string InstagramUrl { get; set; } = "";
+    public string? InstagramUrl { get; set; }
 
     [StringLength(200, ErrorMessage = "The {0} must be at least {2} and no more than {1} characters long.",
         MinimumLength = 2)]
-    public string PinterestUrl { get; set; } = "";
+    public string? PinterestUrl { get; set; }
 
     [StringLength(200, ErrorMessage = "The {0} must be at least {2} and no more than {1} characters long.",
         MinimumLength = 2)]
-    public string YouTubeUrl { get; set; } = "";
+    public string? YouTubeUrl { get; set; }
 
     [StringLength(200, ErrorMessage = "The {0} must be at least {2} and no more than {1} characters long.",
         MinimumLength = 2)]
-    public string TwitterUrl { get; set; } = "";
+    public string? TwitterUrl { get; set; }
 
     public bool UserAcceptedTerms { get; set; } = default!;
 

@@ -14,6 +14,10 @@
     {
       "library": "dropzone@5.9.3",
       "destination": "wwwroot/lib/dropzone/"
+    },
+    {
+      "library": "tinymce@6.4.1",
+      "destination": "wwwroot/lib/tinymce/"
     }
   ]
 }

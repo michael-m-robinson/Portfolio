@@ -11,8 +11,8 @@ public class PostCreateViewModel
 {
     public SelectList? BlogSelectList { get; set; }
     public SelectList? CategorySelectList { get; set; }
-    public List<string>? TagValues { get; set; } = default!;
+    public List<string>? TagValues { get; set; }
     public string? Tags { get; set; }
-    public Post? Post { get; set; } = default!;
-    public IFormFile? ImageFile { get; set; }
+    public Post Post { get; set; } = default!;
+    public IFormFile ImageFile { get; set; } = default!;
 }

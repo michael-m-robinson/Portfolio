@@ -14,7 +14,6 @@ using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Portfolio.Extensions;
 using Portfolio.Models;
-using Portfolio.Models.APIs;
 using Portfolio.Models.Content;
 using Portfolio.Models.ViewModels;
 using Portfolio.Services.Interfaces;
@@ -23,6 +22,7 @@ using SixLabors.ImageSharp.Formats.Png;
 using SmartBreadcrumbs.Attributes;
 using SmartBreadcrumbs.Nodes;
 using X.PagedList;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 #endregion
 
@@ -41,6 +41,8 @@ public class PostsController : Controller
     private readonly IMWSPostService _postService;
     private readonly IMWSTagService _tagService;
     private readonly UserManager<BlogUser> _userManager;
+    private readonly IMWSValidateService _validateService;
+    private readonly IMWSPostEntityService _postEntityService;
 
     public PostsController(UserManager<BlogUser> userManager,
         IMWSPostService postService,
@@ -51,7 +53,9 @@ public class PostsController : Controller
         IMWSCivilityService civilityService,
         IMWSCategoryService categoryService,
         IMWSOpenGraphService openGraphService,
-        IWebHostEnvironment hostEnvironment)
+        IWebHostEnvironment hostEnvironment,
+        IMWSValidateService validateService, 
+        IMWSPostEntityService postEntityService)
     {
         _userManager = userManager;
         _postService = postService;
@@ -63,6 +67,8 @@ public class PostsController : Controller
         _categoryService = categoryService;
         _openGraphService = openGraphService;
         _hostEnvironment = hostEnvironment;
+        _validateService = validateService;
+        _postEntityService = postEntityService;
     }
 
     [TempData] public string StatusMessage { get; set; } = default!;
@@ -160,90 +166,18 @@ public class PostsController : Controller
     {
         if (ModelState.IsValid)
         {
-            if (model.ImageFile is null)
+            var errorList = await _validateService.ValidatePostCreateModel(model);
+            if (errorList.Count > 0)
             {
-                ModelState.AddModelError("ImageFile", "All Posts must have an image.");
-                model = await GetPostCreateViewModelData(model);
-                return View(model);
-            }
-
-            if (!model.ImageFile.IsImage())
-            {
-                ModelState.AddModelError("ImageFile",
-                    "The file must be an image, please check your entry and try again.");
-                model = await GetPostCreateViewModelData(model);
-                return View(model);
-            }
-
-            model.Post!.Slug = model.Post!.Title.Slugify();
-            if (model.Post?.Slug is not null &&
-                await _postService.IsSlugUniqueAsync(model.Post.Slug, model.Post.BlogId) == false)
-            {
-                ModelState.AddModelError("Post.Title", "Your post title is taken, please choose another.");
-                model = await GetPostCreateViewModelData(model);
-                return View(model);
-            }
-
-            var error = false;
-            var slug = model.Post?.Title.Slugify();
-            var noHtmlContent = model.Post!.Content?.RemoveHtmlTags();
-            foreach (var block in JsonSerializer.Deserialize<EditorJs>(model.Post!.Content!).blocks)
-                if (block.data?.text is not null)
+                foreach (var error in errorList)
                 {
-                    var noHtmlTagsBlock = block.data.text.RemoveHtmlTags();
-                    noHtmlTagsBlock =
-                        WebUtility.HtmlDecode(Regex.Replace(noHtmlTagsBlock, "<[^>]*(>|$)", string.Empty));
-
-
-                    if (_civilityService.IsCivil(noHtmlTagsBlock).Verdict == false)
-                    {
-                        ModelState.AddModelError("Post.Content",
-                            "There is foul language in the body of this post, please revise.");
-                        error = true;
-                        break;
-                    }
+                    ModelState.AddModelError(error.Key, error.Value);
+                    model = await GetPostCreateViewModelData(model);
+                    return View(model);
                 }
-
-            if (_civilityService.IsCivil(model.Post.Title).Verdict == false)
-            {
-                ModelState.AddModelError("Post.Title", "There is foul language in the title, please revise.");
-                error = true;
             }
 
-            if (_civilityService.IsCivil(model.Post.Abstract).Verdict == false)
-            {
-                ModelState.AddModelError("Post.Abstract",
-                    "There is foul language in the abstract section of this post, please revise.");
-                error = true;
-            }
-
-            if (model.TagValues is not null)
-                foreach (var tag in model.TagValues)
-                    if (_civilityService.IsCivil(tag).Verdict == false)
-                    {
-                        ModelState.AddModelError("TagValues",
-                            "There is foul language in one of your tags, please revise.");
-                        error = true;
-                        break;
-                    }
-
-            if (error)
-            {
-                ModelState.AddModelError("", "There is/are (an) error(s) in the form.");
-                model = await GetPostCreateViewModelData(model);
-                return View(model);
-            }
-
-            model.Post.Slug = slug;
-            model.Post.Created = DateTimeOffset.Now;
-            model.Post.PostBytes = Encoding.Unicode.GetBytes(model.Post.Content);
-            model.Post.Image = await _imageService.EncodeImageAsync(model.ImageFile);
-            model.Post.ThumbNail = await _imageService.CreateThumbnailAsync(model.ImageFile);
-            model.Post.ImageType = model.ImageFile.ContentType;
-            await _openGraphService.AddOpenGraphPostImageAsync(model.Post, model.ImageFile);
-            await _postService.AddPostAsync(model.Post!);
-            await _tagService.AddTagsAsync(model.Post!, model.TagValues!);
-
+            await _postEntityService.CreatePost(model);
             return RedirectToAction(nameof(Index));
         }
 
@@ -291,32 +225,9 @@ public class PostsController : Controller
         if (string.IsNullOrEmpty(slug)) return BadRequest();
         if ((await _postService.GetPostBySlugAsync(slug, blogSlug)).Id == new Guid()) return NotFound();
 
-        var model = new PostIndexViewModel
-        {
-            Post = await _postService.GetPostBySlugAsync(slug, blogSlug)
-        };
-
-        var blogsNode = new MvcBreadcrumbNode("AllBlogs", "Blogs", "Blogs");
-
-        var blogNode = new MvcBreadcrumbNode("Details", "Blogs", model.Post.Blog?.Name)
-        {
-            RouteValues = new { slug = model.Post.Blog?.Slug },
-            Parent = blogsNode
-        };
-
-        var postNode = new MvcBreadcrumbNode("Details", "Posts", model.Post.Title)
-        {
-            RouteValues = new { slug, blogSlug },
-            Parent = blogNode
-        };
-
-        ViewData["BreadcrumbNode"] = postNode;
-
-        model.PostId = model.Post.Id;
-        model.RecentArticles = await _postService.GetTopFivePostsByDateAsync(model.Post.BlogId);
-        var tagList = await _tagService.GetTopTwentyBlogTagsAsync(model.Post.BlogId);
-        model.BlogTags = await tagList.Select(t => t.Text).Distinct().ToListAsync();
-
+        var model = await _postEntityService.ListPost(slug, blogSlug);
+        SetPostDetailsBreadCrumbs(model, slug, blogSlug);
+        
         return View(model);
     }
 
@@ -332,7 +243,7 @@ public class PostsController : Controller
 
         var model = new PostEditViewModel();
         var userId = _userManager.GetUserId(User);
-        var blog = await _blogService.GetBlogsByAuthorAsync(userId);
+        var blog = await _blogService.GetBlogsByAuthorAsync(userId!);
         model.Post = await _postService.GetPostByIdAsync(id);
         if (blog.FirstOrDefault() is not null)
         {
@@ -343,13 +254,8 @@ public class PostsController : Controller
                 model.Tags = string.Join(",", model.TagValues!);
             }
 
-            model.Post!.Content = string.IsNullOrEmpty(model.Post!.Content)
-                ? Encoding.Unicode.GetString(model.Post?.PostBytes!)
-                : model.Post?.Content;
-
             return View(model);
         }
-
         return NotFound();
     }
 
@@ -365,130 +271,18 @@ public class PostsController : Controller
         if ((await _postService.GetPostByIdAsync(id)).Id == new Guid()) return NotFound();
         if (ModelState.IsValid)
         {
-            var newPost = await _postService.GetPostByIdAsync(id);
-            if (model.Post is not null)
+            var errorList = await _validateService.ValidatePostEditModel(model);
+            if (errorList.Count > 0)
             {
-                newPost.Updated = DateTimeOffset.Now;
-                newPost.Content = model.Post.Content;
-                newPost.Abstract = model.Post.Abstract;
-                newPost.AuthorId = model.Post.AuthorId;
-                newPost.CategoryId = model.Post.CategoryId;
-                newPost.BlogId = model.Post.BlogId;
-                newPost.ReadyStatus = model.Post.ReadyStatus;
-                newPost.Title = model.Post.Title;
-                newPost.Id = model.Post.Id;
-                newPost.Tags = model.Post.Tags;
-            }
-
-            if (model.Post?.Image is null)
-            {
-                model.Post!.Image = newPost.Image;
-                model.Post.ImageType = newPost.ImageType;
-            }
-
-            if (model.ImageFile is not null &&
-                !model.ImageFile.IsImage())
-            {
-                ModelState.AddModelError("ImageFile",
-                    "The file must be an image, please check your entry and try again.");
-                model = GetPostEditViewModelData(model);
-                return View(model);
-            }
-
-            if (model.ImageFile is not null)
-            {
-                newPost.Image = await _imageService.EncodeImageAsync(model.ImageFile);
-                newPost.ThumbNail = await _imageService.CreateThumbnailAsync(model.ImageFile);
-                newPost.ImageType = model.ImageFile.ContentType;
-            }
-
-            var newSlug = model.Post!.Title.Slugify();
-            if (await _postService.IsSlugUniqueAsync(newSlug!, model.Post!.BlogId) == false &&
-                newSlug != newPost.Slug)
-            {
-                ModelState.AddModelError("Post.Title", "Your title is already taken, please choose another.");
-                model = GetPostEditViewModelData(model);
-                return View(model);
-            }
-
-            newPost.Slug = newSlug;
-
-            var error = false;
-            if (_civilityService.IsCivil(newPost.Title).Verdict == false)
-            {
-                ModelState.AddModelError("Post.Title", "There is foul language in the title, please revise.");
-                error = true;
-            }
-
-            if (model.Post?.Content is not null)
-            {
-                var noHtmlContent = model.Post.Content.RemoveHtmlTags();
-                noHtmlContent = WebUtility.HtmlDecode(Regex.Replace(noHtmlContent!, "<[^>]*(>|$)", string.Empty));
-                newPost.PostBytes = Encoding.Unicode.GetBytes(model.Post.Content);
-                if (_civilityService.IsCivil(noHtmlContent).Verdict == false)
+                foreach (var error in errorList)
                 {
-                    ModelState.AddModelError("Post.Content",
-                        "There is foul language in the body of this post, please revise.");
-                    error = true;
+                    ModelState.AddModelError(error.Key, error.Value);
+                    model = GetPostEditViewModelData(model);
+                    return View(model);
                 }
-
-                foreach (var block in JsonSerializer.Deserialize<EditorJs>(model.Post.Content).blocks)
-                    if (block.data?.text is not null)
-                    {
-                        var noHtmlTagsBlock = block.data?.text!.RemoveHtmlTags();
-                        noHtmlTagsBlock =
-                            WebUtility.HtmlDecode(Regex.Replace(noHtmlTagsBlock!, "<[^>]*(>|$)", string.Empty));
-
-
-                        if (_civilityService.IsCivil(noHtmlTagsBlock).Verdict == false)
-                        {
-                            ModelState.AddModelError("Post.Content",
-                                "There is foul language in the body of this post, please revise.");
-                            error = true;
-                            break;
-                        }
-                    }
             }
 
-            else
-            {
-                ModelState.AddModelError("Post.Content",
-                    "The body of the post cannot be empty, please revise.");
-                error = true;
-            }
-
-            if (_civilityService.IsCivil(newPost.Abstract).Verdict == false)
-            {
-                ModelState.AddModelError("Post.Abstract",
-                    "There is foul language in the abstract section of this post, please revise.");
-                error = true;
-            }
-
-            if (model.TagValues is not null)
-                foreach (var tag in model.TagValues)
-                    if (_civilityService.IsCivil(tag).Verdict == false)
-                    {
-                        ModelState.AddModelError("TagValues",
-                            "There is foul language in one of your tags, please revise.");
-                        error = true;
-                        break;
-                    }
-
-            if (error)
-            {
-                ModelState.AddModelError("", "There is/are (an) error(s) in the form.");
-                model.Post!.PostBytes = newPost.PostBytes;
-                model = GetPostEditViewModelData(model);
-                return View(model);
-            }
-
-            if (model.ImageFile is not null)
-                await _openGraphService.AddOpenGraphPostImageAsync(newPost, model.ImageFile);
-
-            await _postService.UpdatePostAsync(newPost);
-            await _tagService.RemoveStaleTagsAsync(newPost);
-            await _tagService.AddTagsAsync(newPost, model.TagValues!);
-
+            await _postEntityService.EditPost(model, id);
             return RedirectToAction(nameof(Index));
         }
 
@@ -541,7 +335,9 @@ public class PostsController : Controller
 
     #region UploadPostImageFile post action
 
-    public async Task<string> UploadPostImageFile(IFormFile file)
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> UploadPostImageFile(IFormFile file)
     {
         var contentRootPath = _hostEnvironment.ContentRootPath;
         var postFilePath = contentRootPath.Substring(0, contentRootPath.LastIndexOf("\\", StringComparison.Ordinal));
@@ -558,17 +354,17 @@ public class PostsController : Controller
                 var imageUrl = $"https://{HttpContext.Request.Host}/ArticleImages/Repository/{filename}";
                 var completePath = Path.Combine(postFilePath, filename);
                 await image.SaveAsync(completePath, new PngEncoder());
-                var result = JsonSerializer.Serialize(new { success = 1, file = new { url = imageUrl } });
+                var result = new { success = 1, location = imageUrl };
 
-                return result;
+                return Json(result);
             }
             catch
             {
-                var result = JsonSerializer.Serialize(new { success = 0, file = new { url = string.Empty } });
-                return result;
+                var result = new { success = 0, location = string.Empty };
+                return Json(result);
             }
 
-        return JsonSerializer.Serialize(new { success = 0, file = new { url = string.Empty } });
+        return Json(new { success = 0, file = new { url = string.Empty } });
     }
 
     #endregion
@@ -593,5 +389,24 @@ public class PostsController : Controller
     {
         model.ImageFile = default!;
         return model;
+    }
+
+    private void SetPostDetailsBreadCrumbs(PostIndexViewModel model, string slug, string blogSlug)
+    {
+        var blogsNode = new MvcBreadcrumbNode("AllBlogs", "Blogs", "Blogs");
+
+        var blogNode = new MvcBreadcrumbNode("Details", "Blogs", model.Post.Blog?.Name)
+        {
+            RouteValues = new { slug = model.Post.Blog?.Slug },
+            Parent = blogsNode
+        };
+
+        var postNode = new MvcBreadcrumbNode("Details", "Posts", model.Post.Title)
+        {
+            RouteValues = new { slug, blogSlug },
+            Parent = blogNode
+        };
+
+        ViewData["BreadcrumbNode"] = postNode;
     }
 }

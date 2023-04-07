@@ -16,14 +16,12 @@
         currentUser = await UserManager.FindByIdAsync(UserManager.GetUserId(User)!);
     }
 
-    var currentPostJson = Encoding.Unicode.GetString(Model.Post.PostBytes!);
     var authorUser = await UserManager.FindByIdAsync(Model.Post!.AuthorId);
     var commentBody = TempData["Comment"] as string;
-    var openGraphImage = $"https://{Context.Request.Host}/PostImages/{Model.Post.Slug}.png";
+    var openGraphImage = $"https://{Context.Request.Host}/ArticleImages/PostImages/{Model.Post.Slug}.png";
 }
 
 @Html.Hidden("CommentBody", commentBody)
-@Html.Hidden("CurrentPostJson", currentPostJson)
 @if (User.Identity!.IsAuthenticated)
 {
     @Html.Hidden("UserStatus", "loggedIn")
@@ -68,7 +66,7 @@ else
                 <h3 class="post-title">@Model.Post.Title</h3>
             </header>
             <figure class="post-image img-radius m-b-45">
-                <img class="img-fluid" src="@openGraphImage?width=819&height=368">
+                <img class="img-fluid" src="@openGraphImage">
             </figure>
             <div class="post-body">
                 <h3 class="post-title">@Model.Post.Title</h3>

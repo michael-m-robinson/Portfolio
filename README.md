@@ -1,4 +1,4 @@
-# Mike's Portfolio Code
+#Â Mike's Portfolio Code
 
 The purpose of sharing this code is to give people insight into my thought process, when tackling a project. Feel free to use and alter this code as you see fit.
 

@@ -260,7 +260,7 @@ public class BlogsController : Controller
     [HttpPost]
     [Authorize(Roles = "Administrator")]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(Guid id, [FromForm] BlogCreateEditViewModel model)
+    public async Task<IActionResult> Edit(Guid id, [FromForm]BlogCreateEditViewModel model)
     {
         if ((await _blogService.GetBlogAsync(id)).Id == new Guid()) return NotFound();
         if (ModelState.IsValid)
@@ -308,10 +308,11 @@ public class BlogsController : Controller
     #region Blog categories get action
 
     [HttpGet]
-    public async Task<IActionResult> GetCategories(Guid id)
+    public async Task<IActionResult> GetBlogInformation(Guid id)
     {
         var categoryList = await _categoryService.GetCategoriesAsync(id);
-        return Json(new { categoryListJson = categoryList });
+        var blog = await _blogService.GetBlogAsync(id);
+        return Json(new { categoryListJson = categoryList, blogJson = blog });
     }
 
     #endregion

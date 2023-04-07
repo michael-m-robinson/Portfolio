@@ -15,17 +15,10 @@ using Portfolio.Services;
 using Portfolio.Services.Interfaces;
 using SixLabors.ImageSharp.Web.DependencyInjection;
 using SmartBreadcrumbs.Extensions;
-using System.IO;
 
 #endregion
 
-var webRootDirectory = "ArticleImages";
-var webRootPath = Directory.GetParent(Directory.GetCurrentDirectory())?.FullName;
-
-var builder = WebApplication.CreateBuilder(new WebApplicationOptions() 
-{
-    WebRootPath = Path.Combine(webRootPath!, webRootDirectory)
-});
+var builder = WebApplication.CreateBuilder();
 
 var configuration = new ConfigurationBuilder()
     .AddJsonFile("appsettings.json")
@@ -62,14 +55,11 @@ builder.Services.AddControllersWithViews()
 builder.Services.AddRazorPages()
     .AddRazorRuntimeCompilation();
 
+var mailSettings = configuration.GetSection("MailSettings");
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<DataService>();
-
-var mailSettings = configuration.GetSection("MailSettings");
 builder.Services.Configure<MailSettingsViewModel>(mailSettings);
 builder.Services.AddReCaptcha(configuration.GetSection("ReCaptcha"));
-
-
 builder.Services.AddScoped<IMWSBlogService, MWSBlogService>();
 builder.Services.AddScoped<IMWSPostService, MWSPostService>();
 builder.Services.AddScoped<IMWSCategoryService, MWSCategoryService>();
@@ -82,8 +72,9 @@ builder.Services.AddScoped<IMWSProjectImageService, MWSProjectImageService>();
 builder.Services.AddScoped<IMWSTagService, MWSTagService>();
 builder.Services.AddScoped<IMWSOpenGraphService, MWSOpenGraphService>();
 builder.Services.AddScoped<IMWSBlogEntityService, MWSBlogEntityService>();
+builder.Services.AddScoped<IMWSPostEntityService, MWSPostEntityService>();
 builder.Services.AddScoped<IMWSValidateService, MWSValidateService>();
-builder.Services.AddImageSharp();
+
 builder.Services.AddBreadcrumbs(Assembly.GetExecutingAssembly(), options =>
 {
     options.TagName = "div";
@@ -115,31 +106,29 @@ else
 
 app.UseResponseCompression();
 app.UseHttpsRedirection();
-
 app.UseDefaultFiles();
-
-app.UseImageSharp();
-
-var env = app.Environment;
 
 var osDirectory = string.Empty;
 if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX) 
     || RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
 {
     Console.WriteLine("We're on Unix!");
-    osDirectory = "wwwroot";
+    osDirectory = "../ArticleImages";
 }
 else
 {
     Console.WriteLine("We're on Windows!");
-    osDirectory = "wwwroot";
+    osDirectory = "..\\ArticleImages";
 }
 
-var contentPath = Path.Combine(env.ContentRootPath, osDirectory);
-
-app.Environment.WebRootFileProvider = new CompositeFileProvider(new PhysicalFileProvider(env.WebRootPath), new PhysicalFileProvider(contentPath));
-
 app.UseStaticFiles();
+
+var env = app.Environment;
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new PhysicalFileProvider(Path.Combine(env.ContentRootPath, "..\\ArticleImages")),
+    RequestPath = "/ArticleImages"
+});
 
 app.UseRouting();
 

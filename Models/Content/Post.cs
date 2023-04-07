@@ -13,28 +13,27 @@ namespace Portfolio.Models.Content;
 public class Post
 {
     [Key] public Guid Id { get; set; }
-    [Display(Name = "Blog Name")] public Guid BlogId { get; set; }
-    public Guid CategoryId { get; set; } = default!;
-    public byte[]? PostBytes { get; set; } = default!;
-    public string AuthorId { get; set; } = default!;
+    [Display(Name = "Blog Name")] public Guid BlogId { get; set; } = new();
+    public Guid CategoryId { get; set; } = new();
+    public string AuthorId { get; set; } = string.Empty;
     [JsonIgnore] public ReadyStatus ReadyStatus { get; set; }
-    public string? Slug { get; set; }
-    public byte[]? Image { get; set; }
-    public byte[]? ThumbNail { get; set; }
-    public string? ImageType { get; set; } = default!;
+    public string Slug { get; set; } = string.Empty;
+    public byte[] Image { get; set; } = new byte[] { };
+    public byte[] ThumbNail { get; set; } = new byte[] {};
+    public string ImageType { get; set; } = string.Empty;
     [NotMapped] public string? Base64PostPicture { get; set; }
 
     [Required]
     [StringLength(75, ErrorMessage = "The {0} must be at least {2} and no more than {1} characters long.",
         MinimumLength = 2)]
-    public string Title { get; set; } = default!;
+    public string Title { get; set; } = string.Empty;
 
     [Required]
     [StringLength(200, ErrorMessage = "The {0} must be at least {2} and no more than {1} characters long.",
         MinimumLength = 2)]
-    public string Abstract { get; set; } = default!;
+    public string Abstract { get; set; } = string.Empty;
 
-    [NotMapped] public string? Content { get; set; } = string.Empty;
+    [NotMapped] public string Content { get; set; } = string.Empty;
 
     [DataType(DataType.Date)]
     [Display(Name = "Created Date")]
@@ -47,10 +46,10 @@ public class Post
     // Navigation Properties
 
     //1:M - One blog has many posts
-    [Display(Name = "Blog")] public virtual Blog? Blog { get; set; }
+    [Display(Name = "Blog")] public virtual Blog Blog { get; set; } = new();
 
     //1:M - One user can have many blogs
-    [Display(Name = "Author")] public virtual BlogUser? Author { get; set; }
+    [Display(Name = "Author")] public virtual BlogUser Author { get; set; } = new();
 
     //1:1 - One post has one category.
     public virtual Category? Category { get; set; }

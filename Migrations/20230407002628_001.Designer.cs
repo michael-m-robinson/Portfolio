@@ -11,8 +11,8 @@ using Portfolio.Data;
 namespace Portfolio.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20230131191714_011")]
-    partial class _011
+    [Migration("20230407002628_001")]
+    partial class _001
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -174,7 +174,6 @@ namespace Portfolio.Migrations
                         .HasColumnType("tinyint(1)");
 
                     b.Property<string>("FacebookUrl")
-                        .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("varchar(200)");
 
@@ -190,7 +189,6 @@ namespace Portfolio.Migrations
                         .HasColumnType("longtext");
 
                     b.Property<string>("InstagramUrl")
-                        .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("varchar(200)");
 
@@ -223,7 +221,6 @@ namespace Portfolio.Migrations
                         .HasColumnType("tinyint(1)");
 
                     b.Property<string>("PinterestUrl")
-                        .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("varchar(200)");
 
@@ -231,7 +228,6 @@ namespace Portfolio.Migrations
                         .HasColumnType("longtext");
 
                     b.Property<string>("TwitterUrl")
-                        .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("varchar(200)");
 
@@ -246,7 +242,6 @@ namespace Portfolio.Migrations
                         .HasColumnType("varchar(256)");
 
                     b.Property<string>("YouTubeUrl")
-                        .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("varchar(200)");
 
@@ -385,33 +380,26 @@ namespace Portfolio.Migrations
                     b.Property<Guid>("CategoryId")
                         .HasColumnType("char(36)");
 
-                    b.Property<string>("Content")
-                        .IsRequired()
-                        .HasColumnType("longtext");
-
                     b.Property<DateTimeOffset>("Created")
                         .HasColumnType("datetime(6)");
 
                     b.Property<byte[]>("Image")
+                        .IsRequired()
                         .HasColumnType("longblob");
 
                     b.Property<string>("ImageType")
-                        .HasColumnType("longtext");
-
-                    b.Property<string>("OpenGraphFileName")
                         .IsRequired()
                         .HasColumnType("longtext");
-
-                    b.Property<Guid?>("PostBodyId")
-                        .HasColumnType("char(36)");
 
                     b.Property<int>("ReadyStatus")
                         .HasColumnType("int");
 
                     b.Property<string>("Slug")
+                        .IsRequired()
                         .HasColumnType("longtext");
 
                     b.Property<byte[]>("ThumbNail")
+                        .IsRequired()
                         .HasColumnType("longblob");
 
                     b.Property<string>("Title")
@@ -430,106 +418,7 @@ namespace Portfolio.Migrations
 
                     b.HasIndex("CategoryId");
 
-                    b.HasIndex("PostBodyId");
-
                     b.ToTable("Posts");
-                });
-
-            modelBuilder.Entity("Portfolio.Models.Content.PostBody", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("char(36)");
-
-                    b.Property<long>("time")
-                        .HasColumnType("bigint");
-
-                    b.Property<string>("version")
-                        .IsRequired()
-                        .HasColumnType("longtext");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("PostBodies");
-                });
-
-            modelBuilder.Entity("Portfolio.Models.Content.PostBody+Block", b =>
-                {
-                    b.Property<string>("id")
-                        .HasColumnType("varchar(255)");
-
-                    b.Property<Guid?>("PostBodyId")
-                        .HasColumnType("char(36)");
-
-                    b.Property<Guid?>("dataId")
-                        .HasColumnType("char(36)");
-
-                    b.Property<string>("type")
-                        .IsRequired()
-                        .HasColumnType("longtext");
-
-                    b.HasKey("id");
-
-                    b.HasIndex("PostBodyId");
-
-                    b.HasIndex("dataId");
-
-                    b.ToTable("Block");
-                });
-
-            modelBuilder.Entity("Portfolio.Models.Content.PostBody+Data", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("char(36)");
-
-                    b.Property<string>("alignment")
-                        .HasColumnType("longtext");
-
-                    b.Property<string>("caption")
-                        .HasColumnType("longtext");
-
-                    b.Property<string>("code")
-                        .HasColumnType("longtext");
-
-                    b.Property<Guid?>("fileId")
-                        .HasColumnType("char(36)");
-
-                    b.Property<int?>("level")
-                        .HasColumnType("int");
-
-                    b.Property<bool?>("stretched")
-                        .HasColumnType("tinyint(1)");
-
-                    b.Property<string>("text")
-                        .HasColumnType("longtext");
-
-                    b.Property<bool?>("withBackground")
-                        .HasColumnType("tinyint(1)");
-
-                    b.Property<bool?>("withBorder")
-                        .HasColumnType("tinyint(1)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("fileId");
-
-                    b.ToTable("Data");
-                });
-
-            modelBuilder.Entity("Portfolio.Models.Content.PostBody+File", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("char(36)");
-
-                    b.Property<string>("url")
-                        .IsRequired()
-                        .HasColumnType("longtext");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("File");
                 });
 
             modelBuilder.Entity("Portfolio.Models.Content.Project", b =>
@@ -769,39 +658,11 @@ namespace Portfolio.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Portfolio.Models.Content.PostBody", "PostBody")
-                        .WithMany()
-                        .HasForeignKey("PostBodyId");
-
                     b.Navigation("Author");
 
                     b.Navigation("Blog");
 
                     b.Navigation("Category");
-
-                    b.Navigation("PostBody");
-                });
-
-            modelBuilder.Entity("Portfolio.Models.Content.PostBody+Block", b =>
-                {
-                    b.HasOne("Portfolio.Models.Content.PostBody", null)
-                        .WithMany("blocks")
-                        .HasForeignKey("PostBodyId");
-
-                    b.HasOne("Portfolio.Models.Content.PostBody+Data", "data")
-                        .WithMany()
-                        .HasForeignKey("dataId");
-
-                    b.Navigation("data");
-                });
-
-            modelBuilder.Entity("Portfolio.Models.Content.PostBody+Data", b =>
-                {
-                    b.HasOne("Portfolio.Models.Content.PostBody+File", "file")
-                        .WithMany()
-                        .HasForeignKey("fileId");
-
-                    b.Navigation("file");
                 });
 
             modelBuilder.Entity("Portfolio.Models.Filters.Category", b =>
@@ -875,11 +736,6 @@ namespace Portfolio.Migrations
                     b.Navigation("Comments");
 
                     b.Navigation("Tags");
-                });
-
-            modelBuilder.Entity("Portfolio.Models.Content.PostBody", b =>
-                {
-                    b.Navigation("blocks");
                 });
 
             modelBuilder.Entity("Portfolio.Models.Content.Project", b =>

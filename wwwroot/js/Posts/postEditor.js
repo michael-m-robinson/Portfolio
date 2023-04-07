@@ -1,6 +1,4 @@
 
-
-
 //Image upload handler callback
 const image_handler = (blobInfo, progress) => new Promise((resolve, reject) => {
     //AntiForgeryToken
@@ -46,10 +44,24 @@ const image_handler = (blobInfo, progress) => new Promise((resolve, reject) => {
     xhr.send(formData);
 });
 
+$('document').ready(function () {
+    let content = '';
+    if (document.getElementById('ArticleData') !== undefined) {
+        content = document.getElementById('ArticleData').value;
+    }
 
-//Initialize tinymce
-tinymce.init({
-    selector: `[name='Post.Content']`,
-    plugins: 'image',
-    images_upload_handler: image_handler
+    //Initialize tinymce
+    tinymce.init({
+        selector: `[name='Post.Content']`,
+        plugins: 'image',
+        images_upload_handler: image_handler,
+        setup: function (editor) {
+            editor.on('init', function (e) {
+                editor.setContent(content);
+            });
+        },
+    });
 });
+
+
+

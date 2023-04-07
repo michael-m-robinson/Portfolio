@@ -245,6 +245,8 @@ public class PostsController : Controller
         var userId = _userManager.GetUserId(User);
         var blog = await _blogService.GetBlogsByAuthorAsync(userId!);
         model.Post = await _postService.GetPostByIdAsync(id);
+        model.Post.Content = WebUtility.HtmlDecode(model.Post.Content);
+
         if (blog.FirstOrDefault() is not null)
         {
             if (model.Post?.Tags is not null)

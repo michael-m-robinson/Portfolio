@@ -33,7 +33,8 @@ public class Post
         MinimumLength = 2)]
     public string Abstract { get; set; } = string.Empty;
 
-    [NotMapped] public string Content { get; set; } = string.Empty;
+    [Required]
+    public string Content { get; set; } = string.Empty;
 
     [DataType(DataType.Date)]
     [Display(Name = "Created Date")]

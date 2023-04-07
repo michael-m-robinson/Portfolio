@@ -49,15 +49,15 @@ namespace Portfolio.Migrations
                     Image = table.Column<byte[]>(type: "longblob", nullable: true),
                     ImageType = table.Column<string>(type: "longtext", nullable: true)
                         .Annotation("MySql:CharSet", "utf8mb4"),
-                    FacebookUrl = table.Column<string>(type: "varchar(200)", maxLength: 200, nullable: false)
+                    FacebookUrl = table.Column<string>(type: "varchar(200)", maxLength: 200, nullable: true)
                         .Annotation("MySql:CharSet", "utf8mb4"),
-                    InstagramUrl = table.Column<string>(type: "varchar(200)", maxLength: 200, nullable: false)
+                    InstagramUrl = table.Column<string>(type: "varchar(200)", maxLength: 200, nullable: true)
                         .Annotation("MySql:CharSet", "utf8mb4"),
-                    PinterestUrl = table.Column<string>(type: "varchar(200)", maxLength: 200, nullable: false)
+                    PinterestUrl = table.Column<string>(type: "varchar(200)", maxLength: 200, nullable: true)
                         .Annotation("MySql:CharSet", "utf8mb4"),
-                    YouTubeUrl = table.Column<string>(type: "varchar(200)", maxLength: 200, nullable: false)
+                    YouTubeUrl = table.Column<string>(type: "varchar(200)", maxLength: 200, nullable: true)
                         .Annotation("MySql:CharSet", "utf8mb4"),
-                    TwitterUrl = table.Column<string>(type: "varchar(200)", maxLength: 200, nullable: false)
+                    TwitterUrl = table.Column<string>(type: "varchar(200)", maxLength: 200, nullable: true)
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     UserAcceptedTerms = table.Column<bool>(type: "tinyint(1)", nullable: false),
                     Email = table.Column<string>(type: "varchar(256)", maxLength: 256, nullable: true)
@@ -98,11 +98,10 @@ namespace Portfolio.Migrations
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     Description = table.Column<string>(type: "varchar(200)", maxLength: 200, nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4"),
-                    Created = table.Column<DateTime>(type: "datetime(6)", nullable: true),
-                    Image = table.Column<byte[]>(type: "longblob", nullable: true),
-                    ImageType = table.Column<string>(type: "longtext", nullable: true)
-                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    Created = table.Column<DateTimeOffset>(type: "datetime(6)", nullable: true),
                     ProjectUrl = table.Column<string>(type: "longtext", nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    Slug = table.Column<string>(type: "longtext", nullable: true)
                         .Annotation("MySql:CharSet", "utf8mb4")
                 },
                 constraints: table =>
@@ -275,7 +274,7 @@ namespace Portfolio.Migrations
                 {
                     Id = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
                     ProjectId = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
-                    Name = table.Column<string>(type: "longtext", nullable: false)
+                    Text = table.Column<string>(type: "longtext", nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4")
                 },
                 constraints: table =>
@@ -283,6 +282,30 @@ namespace Portfolio.Migrations
                     table.PrimaryKey("PK_ProjectCategories", x => x.Id);
                     table.ForeignKey(
                         name: "FK_ProjectCategories_Projects_ProjectId",
+                        column: x => x.ProjectId,
+                        principalTable: "Projects",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                })
+                .Annotation("MySql:CharSet", "utf8mb4");
+
+            migrationBuilder.CreateTable(
+                name: "ProjectImages",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
+                    File = table.Column<byte[]>(type: "longblob", nullable: false),
+                    FileContentType = table.Column<string>(type: "longtext", nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    Name = table.Column<string>(type: "longtext", nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    ProjectId = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci")
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ProjectImages", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_ProjectImages_Projects_ProjectId",
                         column: x => x.ProjectId,
                         principalTable: "Projects",
                         principalColumn: "Id",
@@ -320,23 +343,19 @@ namespace Portfolio.Migrations
                     CategoryId = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
                     AuthorId = table.Column<string>(type: "varchar(255)", nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4"),
+                    ReadyStatus = table.Column<int>(type: "int", nullable: false),
+                    Slug = table.Column<string>(type: "longtext", nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    Image = table.Column<byte[]>(type: "longblob", nullable: false),
+                    ThumbNail = table.Column<byte[]>(type: "longblob", nullable: false),
+                    ImageType = table.Column<string>(type: "longtext", nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
                     Title = table.Column<string>(type: "varchar(75)", maxLength: 75, nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     Abstract = table.Column<string>(type: "varchar(200)", maxLength: 200, nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4"),
-                    Content = table.Column<string>(type: "longtext", nullable: false)
-                        .Annotation("MySql:CharSet", "utf8mb4"),
                     Created = table.Column<DateTimeOffset>(type: "datetime(6)", nullable: false),
-                    Updated = table.Column<DateTimeOffset>(type: "datetime(6)", nullable: true),
-                    ReadyStatus = table.Column<int>(type: "int", nullable: false),
-                    Slug = table.Column<string>(type: "longtext", nullable: true)
-                        .Annotation("MySql:CharSet", "utf8mb4"),
-                    Image = table.Column<byte[]>(type: "longblob", nullable: true),
-                    ThumbNail = table.Column<byte[]>(type: "longblob", nullable: true),
-                    ImageType = table.Column<string>(type: "longtext", nullable: true)
-                        .Annotation("MySql:CharSet", "utf8mb4"),
-                    OpenGraphFileName = table.Column<string>(type: "longtext", nullable: false)
-                        .Annotation("MySql:CharSet", "utf8mb4")
+                    Updated = table.Column<DateTimeOffset>(type: "datetime(6)", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -519,6 +538,11 @@ namespace Portfolio.Migrations
                 column: "ProjectId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_ProjectImages_ProjectId",
+                table: "ProjectImages",
+                column: "ProjectId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Tags_BlogUserId",
                 table: "Tags",
                 column: "BlogUserId");
@@ -552,6 +576,9 @@ namespace Portfolio.Migrations
 
             migrationBuilder.DropTable(
                 name: "ProjectCategories");
+
+            migrationBuilder.DropTable(
+                name: "ProjectImages");
 
             migrationBuilder.DropTable(
                 name: "Tags");

@@ -11,15 +11,15 @@ using Portfolio.Data;
 namespace Portfolio.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20230107212054_005")]
-    partial class _005
+    [Migration("20230407011916_002")]
+    partial class _002
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "7.0.0")
+                .HasAnnotation("ProductVersion", "7.0.2")
                 .HasAnnotation("Relational:MaxIdentifierLength", 64);
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
@@ -174,7 +174,6 @@ namespace Portfolio.Migrations
                         .HasColumnType("tinyint(1)");
 
                     b.Property<string>("FacebookUrl")
-                        .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("varchar(200)");
 
@@ -190,7 +189,6 @@ namespace Portfolio.Migrations
                         .HasColumnType("longtext");
 
                     b.Property<string>("InstagramUrl")
-                        .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("varchar(200)");
 
@@ -223,7 +221,6 @@ namespace Portfolio.Migrations
                         .HasColumnType("tinyint(1)");
 
                     b.Property<string>("PinterestUrl")
-                        .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("varchar(200)");
 
@@ -231,7 +228,6 @@ namespace Portfolio.Migrations
                         .HasColumnType("longtext");
 
                     b.Property<string>("TwitterUrl")
-                        .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("varchar(200)");
 
@@ -246,7 +242,6 @@ namespace Portfolio.Migrations
                         .HasColumnType("varchar(256)");
 
                     b.Property<string>("YouTubeUrl")
-                        .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("varchar(200)");
 
@@ -393,12 +388,10 @@ namespace Portfolio.Migrations
                         .HasColumnType("datetime(6)");
 
                     b.Property<byte[]>("Image")
+                        .IsRequired()
                         .HasColumnType("longblob");
 
                     b.Property<string>("ImageType")
-                        .HasColumnType("longtext");
-
-                    b.Property<string>("OpenGraphFileName")
                         .IsRequired()
                         .HasColumnType("longtext");
 
@@ -406,9 +399,11 @@ namespace Portfolio.Migrations
                         .HasColumnType("int");
 
                     b.Property<string>("Slug")
+                        .IsRequired()
                         .HasColumnType("longtext");
 
                     b.Property<byte[]>("ThumbNail")
+                        .IsRequired()
                         .HasColumnType("longblob");
 
                     b.Property<string>("Title")
@@ -447,6 +442,9 @@ namespace Portfolio.Migrations
 
                     b.Property<string>("ProjectUrl")
                         .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("Slug")
                         .HasColumnType("longtext");
 
                     b.Property<string>("Title")

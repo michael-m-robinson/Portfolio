@@ -16,7 +16,10 @@
         ignore: ":hidden, [contenteditable='true']:not([name])",
     });
 
-    fetchCategories();
+    if (window.location.pathname === '/Posts/Create') {
+        fetchCategories();
+    }
+
     blogSelectList.addEventListener('change', () => {
         fetchCategories();
     });

@@ -10,19 +10,20 @@ namespace Portfolio.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.RenameColumn(
-                name: "Name",
-                table: "ProjectCategories",
-                newName: "Text");
+            migrationBuilder.AddColumn<string>(
+                name: "Content",
+                table: "Posts",
+                type: "longtext",
+                nullable: false)
+                .Annotation("MySql:CharSet", "utf8mb4");
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.RenameColumn(
-                name: "Text",
-                table: "ProjectCategories",
-                newName: "Name");
+            migrationBuilder.DropColumn(
+                name: "Content",
+                table: "Posts");
         }
     }
 }

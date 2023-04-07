@@ -1,7 +1,9 @@
-﻿using Portfolio.Extensions;
+﻿using Microsoft.AspNetCore.Mvc.Rendering;
+using Portfolio.Extensions;
 using Portfolio.Models.Content;
 using Portfolio.Models.ViewModels;
 using Portfolio.Services.Interfaces;
+using System.Net;
 using X.PagedList;
 
 namespace Portfolio.Services
@@ -31,6 +33,7 @@ namespace Portfolio.Services
             model.Post.Image = await _imageService.EncodeImageAsync(model.ImageFile);
             model.Post.ThumbNail = await _imageService.CreateThumbnailAsync(model.ImageFile);
             model.Post.ImageType = model.ImageFile.ContentType;
+            model.Post.Content = System.Web.HttpUtility.HtmlEncode(model.Post.Content);
 
             await _openGraphService.AddOpenGraphPostImageAsync(model.Post, model.ImageFile);
             await _postService.AddPostAsync(model.Post);
@@ -65,7 +68,9 @@ namespace Portfolio.Services
             {
                 Post = await _postService.GetPostBySlugAsync(slug, blogSlug)
             };
+
             model.PostId = model.Post.Id;
+            model.Post.Content = WebUtility.HtmlDecode(model.Post.Content);
             model.RecentArticles = await _postService.GetTopFivePostsByDateAsync(model.Post.BlogId);
             var tagList = await _tagService.GetTopTwentyBlogTagsAsync(model.Post.BlogId);
             model.BlogTags = await tagList.Select(t => t.Text).Distinct().ToListAsync();

@@ -171,7 +171,6 @@ namespace Portfolio.Migrations
                         .HasColumnType("tinyint(1)");
 
                     b.Property<string>("FacebookUrl")
-                        .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("varchar(200)");
 
@@ -187,7 +186,6 @@ namespace Portfolio.Migrations
                         .HasColumnType("longtext");
 
                     b.Property<string>("InstagramUrl")
-                        .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("varchar(200)");
 
@@ -220,7 +218,6 @@ namespace Portfolio.Migrations
                         .HasColumnType("tinyint(1)");
 
                     b.Property<string>("PinterestUrl")
-                        .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("varchar(200)");
 
@@ -228,7 +225,6 @@ namespace Portfolio.Migrations
                         .HasColumnType("longtext");
 
                     b.Property<string>("TwitterUrl")
-                        .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("varchar(200)");
 
@@ -243,7 +239,6 @@ namespace Portfolio.Migrations
                         .HasColumnType("varchar(256)");
 
                     b.Property<string>("YouTubeUrl")
-                        .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("varchar(200)");
 
@@ -382,25 +377,30 @@ namespace Portfolio.Migrations
                     b.Property<Guid>("CategoryId")
                         .HasColumnType("char(36)");
 
+                    b.Property<string>("Content")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
                     b.Property<DateTimeOffset>("Created")
                         .HasColumnType("datetime(6)");
 
                     b.Property<byte[]>("Image")
+                        .IsRequired()
                         .HasColumnType("longblob");
 
                     b.Property<string>("ImageType")
+                        .IsRequired()
                         .HasColumnType("longtext");
-
-                    b.Property<byte[]>("PostBytes")
-                        .HasColumnType("longblob");
 
                     b.Property<int>("ReadyStatus")
                         .HasColumnType("int");
 
                     b.Property<string>("Slug")
+                        .IsRequired()
                         .HasColumnType("longtext");
 
                     b.Property<byte[]>("ThumbNail")
+                        .IsRequired()
                         .HasColumnType("longblob");
 
                     b.Property<string>("Title")

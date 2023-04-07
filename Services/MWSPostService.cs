@@ -33,7 +33,7 @@ public class MWSPostService : IMWSPostService
     {
         try
         {
-            _context.Remove(post);
+            _context.Entry(post).State = EntityState.Deleted;
             await _context.SaveChangesAsync();
         }
         catch (Exception ex)
@@ -221,7 +221,7 @@ public class MWSPostService : IMWSPostService
     {
         try
         {
-            _context.Update(post);
+            _context.Entry(post).State = EntityState.Modified;
             await _context.SaveChangesAsync();
         }
         catch (Exception ex)
@@ -241,7 +241,7 @@ public class MWSPostService : IMWSPostService
     {
         try
         {
-            await _context.AddAsync(post);
+            _context.Entry(post).State = EntityState.Added;
             await _context.SaveChangesAsync();
         }
         catch (Exception ex)

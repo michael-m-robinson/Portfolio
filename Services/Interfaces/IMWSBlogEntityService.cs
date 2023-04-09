@@ -1,6 +1,10 @@
+#region Imports
+
 using Portfolio.Models.Content;
 using Portfolio.Models.ViewModels;
 using X.PagedList;
+
+#endregion
 
 namespace Portfolio.Services.Interfaces;
 
@@ -11,6 +15,6 @@ public interface IMWSBlogEntityService
     public Task<IPagedList<Blog>> ListAllBlogs(int? page);
     public Task<BlogPostViewModel> ListBlog(Blog currentBlog, int? page);
     public Task<BlogPostViewModel> ListBlogByCategory(Blog currentBlog, int? page, string categoryName);
-    public Task<BlogPostViewModel> ListBlogPostsBySearch(string term, string slug, int? page);
     public Task<BlogPostViewModel> ListBlogByTag(string tag, string slug, int? page);
+    public Task<BlogPostViewModel> ListBlogPostsBySearch(string term, string slug, int? page);
 }

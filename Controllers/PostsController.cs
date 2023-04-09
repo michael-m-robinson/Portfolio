@@ -3,9 +3,6 @@
 #region Imports
 
 using System.Net;
-using System.Text;
-using System.Text.Json;
-using System.Text.RegularExpressions;
 using AspNetCore.ReCaptcha;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -22,7 +19,6 @@ using SixLabors.ImageSharp.Formats.Png;
 using SmartBreadcrumbs.Attributes;
 using SmartBreadcrumbs.Nodes;
 using X.PagedList;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 #endregion
 
@@ -33,37 +29,28 @@ public class PostsController : Controller
 {
     private readonly IMWSBlogService _blogService;
     private readonly IMWSCategoryService _categoryService;
-    private readonly IMWSCivilityService _civilityService;
     private readonly IMWSCommentService _commentService;
     private readonly IWebHostEnvironment _hostEnvironment;
-    private readonly IMWSImageService _imageService;
     private readonly IMWSOpenGraphService _openGraphService;
+    private readonly IMWSPostEntityService _postEntityService;
     private readonly IMWSPostService _postService;
-    private readonly IMWSTagService _tagService;
     private readonly UserManager<BlogUser> _userManager;
     private readonly IMWSValidateService _validateService;
-    private readonly IMWSPostEntityService _postEntityService;
 
     public PostsController(UserManager<BlogUser> userManager,
         IMWSPostService postService,
         IMWSBlogService blogService,
-        IMWSImageService imageService,
-        IMWSTagService tagService,
         IMWSCommentService commentService,
-        IMWSCivilityService civilityService,
         IMWSCategoryService categoryService,
         IMWSOpenGraphService openGraphService,
         IWebHostEnvironment hostEnvironment,
-        IMWSValidateService validateService, 
+        IMWSValidateService validateService,
         IMWSPostEntityService postEntityService)
     {
         _userManager = userManager;
         _postService = postService;
         _blogService = blogService;
-        _imageService = imageService;
-        _tagService = tagService;
         _commentService = commentService;
-        _civilityService = civilityService;
         _categoryService = categoryService;
         _openGraphService = openGraphService;
         _hostEnvironment = hostEnvironment;
@@ -168,14 +155,12 @@ public class PostsController : Controller
         {
             var errorList = await _validateService.ValidatePostCreateModel(model);
             if (errorList.Count > 0)
-            {
                 foreach (var error in errorList)
                 {
                     ModelState.AddModelError(error.Key, error.Value);
                     model = await GetPostCreateViewModelData(model);
                     return View(model);
                 }
-            }
 
             await _postEntityService.CreatePost(model);
             return RedirectToAction(nameof(Index));
@@ -227,7 +212,7 @@ public class PostsController : Controller
 
         var model = await _postEntityService.ListPost(slug, blogSlug);
         SetPostDetailsBreadCrumbs(model, slug, blogSlug);
-        
+
         return View(model);
     }
 
@@ -258,6 +243,7 @@ public class PostsController : Controller
 
             return View(model);
         }
+
         return NotFound();
     }
 
@@ -280,16 +266,13 @@ public class PostsController : Controller
         if (ModelState.IsValid)
         {
             var errorList = await _validateService.ValidatePostEditModel(model);
-
             if (errorList.Count > 0)
-            {
                 foreach (var error in errorList)
                 {
                     ModelState.AddModelError(error.Key, error.Value);
                     model = GetPostEditViewModelData(model);
                     return View(model);
                 }
-            }
 
             await _postEntityService.EditPost(model, id);
             return RedirectToAction(nameof(Index));
@@ -300,6 +283,28 @@ public class PostsController : Controller
     }
 
     #endregion
+
+    private async Task<PostCreateViewModel> GetPostCreateViewModelData(PostCreateViewModel model)
+    {
+        var userId = _userManager.GetUserId(User);
+        var blog = await _blogService.GetBlogsByAuthorAsync(userId!);
+        var lastSelectedBlog = await _blogService.GetBlogAsync(model.Post!.BlogId);
+
+        model.BlogSelectList = new SelectList(blog, "Id", "Name", lastSelectedBlog);
+
+        model.CategorySelectList =
+            new SelectList(await _categoryService.GetCategoriesAsync(lastSelectedBlog.Id), "Id", "Name");
+
+        model.ImageFile = default!;
+
+        return model;
+    }
+
+    private PostEditViewModel GetPostEditViewModelData(PostEditViewModel model)
+    {
+        model.ImageFile = default!;
+        return model;
+    }
 
     #region Post index get action
 
@@ -342,6 +347,25 @@ public class PostsController : Controller
 
     #endregion
 
+    private void SetPostDetailsBreadCrumbs(PostIndexViewModel model, string slug, string blogSlug)
+    {
+        var blogsNode = new MvcBreadcrumbNode("AllBlogs", "Blogs", "Blogs");
+
+        var blogNode = new MvcBreadcrumbNode("Details", "Blogs", model.Post.Blog?.Name)
+        {
+            RouteValues = new { slug = model.Post.Blog?.Slug },
+            Parent = blogsNode
+        };
+
+        var postNode = new MvcBreadcrumbNode("Details", "Posts", model.Post.Title)
+        {
+            RouteValues = new { slug, blogSlug },
+            Parent = blogNode
+        };
+
+        ViewData["BreadcrumbNode"] = postNode;
+    }
+
     #region UploadPostImageFile post action
 
     [HttpPost]
@@ -377,45 +401,4 @@ public class PostsController : Controller
     }
 
     #endregion
-
-    private async Task<PostCreateViewModel> GetPostCreateViewModelData(PostCreateViewModel model)
-    {
-        var userId = _userManager.GetUserId(User);
-        var blog = await _blogService.GetBlogsByAuthorAsync(userId!);
-        var lastSelectedBlog = await _blogService.GetBlogAsync(model.Post!.BlogId);
-
-        model.BlogSelectList = new SelectList(blog, "Id", "Name", lastSelectedBlog);
-
-        model.CategorySelectList =
-            new SelectList(await _categoryService.GetCategoriesAsync(lastSelectedBlog.Id), "Id", "Name");
-
-        model.ImageFile = default!;
-
-        return model;
-    }
-
-    private PostEditViewModel GetPostEditViewModelData(PostEditViewModel model)
-    {
-        model.ImageFile = default!;
-        return model;
-    }
-
-    private void SetPostDetailsBreadCrumbs(PostIndexViewModel model, string slug, string blogSlug)
-    {
-        var blogsNode = new MvcBreadcrumbNode("AllBlogs", "Blogs", "Blogs");
-
-        var blogNode = new MvcBreadcrumbNode("Details", "Blogs", model.Post.Blog?.Name)
-        {
-            RouteValues = new { slug = model.Post.Blog?.Slug },
-            Parent = blogsNode
-        };
-
-        var postNode = new MvcBreadcrumbNode("Details", "Posts", model.Post.Title)
-        {
-            RouteValues = new { slug, blogSlug },
-            Parent = blogNode
-        };
-
-        ViewData["BreadcrumbNode"] = postNode;
-    }
 }

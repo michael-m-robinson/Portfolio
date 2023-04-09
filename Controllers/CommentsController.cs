@@ -33,6 +33,14 @@ public class CommentsController : Controller
 
     #endregion
 
+    private async Task<bool> CommentExists(Guid id)
+    {
+        var comment = await _commentService.GetCommentAsync(id);
+        if (comment == new Comment()) return false;
+
+        return true;
+    }
+
     #region Delete comments get action
 
     // GET: Comments/Delete/5
@@ -179,12 +187,4 @@ public class CommentsController : Controller
     }
 
     #endregion
-
-    private async Task<bool> CommentExists(Guid id)
-    {
-        var comment = await _commentService.GetCommentAsync(id);
-        if (comment == new Comment()) return false;
-
-        return true;
-    }
 }

@@ -18,8 +18,8 @@ public class Post
     public string AuthorId { get; set; } = string.Empty;
     [JsonIgnore] public ReadyStatus ReadyStatus { get; set; }
     public string Slug { get; set; } = string.Empty;
-    public byte[] Image { get; set; } = new byte[] { };
-    public byte[] ThumbNail { get; set; } = new byte[] {};
+    public byte[] Image { get; set; } = { };
+    public byte[] ThumbNail { get; set; } = { };
     public string ImageType { get; set; } = string.Empty;
     [NotMapped] public string? Base64PostPicture { get; set; }
 
@@ -33,8 +33,7 @@ public class Post
         MinimumLength = 2)]
     public string Abstract { get; set; } = string.Empty;
 
-    [Required]
-    public string Content { get; set; } = string.Empty;
+    [Required] public string Content { get; set; } = string.Empty;
 
     [DataType(DataType.Date)]
     [Display(Name = "Created Date")]

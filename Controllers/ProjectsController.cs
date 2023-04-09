@@ -2,7 +2,6 @@
 
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -20,26 +19,26 @@ namespace Portfolio.Controllers;
 
 public class ProjectsController : Controller
 {
-    private readonly IMWSCivilityService _civilityService;
     private readonly IMWSImageService _imageService;
     private readonly IMWSOpenGraphService _openGraphService;
-    private readonly IMWSProjectImageService _projectImageService;
+    private readonly IMWSProjectEntityService _projectEntity;
     private readonly IMWSProjectService _projectService;
     private readonly UserManager<BlogUser> _userManager;
+    private readonly IMWSValidateService _validateService;
 
     public ProjectsController(IMWSProjectService projectService,
-        IMWSCivilityService civilityService,
-        IMWSProjectImageService projectImageService,
         IMWSImageService imageService,
-        IMWSOpenGraphService openGraphService, 
-        UserManager<BlogUser> userManager)
+        IMWSOpenGraphService openGraphService,
+        UserManager<BlogUser> userManager,
+        IMWSValidateService validateService,
+        IMWSProjectEntityService projectEntity)
     {
         _projectService = projectService;
-        _civilityService = civilityService;
-        _projectImageService = projectImageService;
         _imageService = imageService;
         _openGraphService = openGraphService;
         _userManager = userManager;
+        _validateService = validateService;
+        _projectEntity = projectEntity;
     }
 
     [TempData] public string StatusMessage { get; set; } = default!;
@@ -88,123 +87,31 @@ public class ProjectsController : Controller
     [Authorize(Roles = "Administrator")]
     public async Task<IActionResult> Create([FromForm] ProjectCreateViewModel model)
     {
-        var enumSelectListItems = new List<SelectListItem>().CreateProjectSelectListItems();
         var categoryList = model.Project.Categories.First().Split(',').ToList();
+        List<SelectListItem>? categorySelectItems;
         if (ModelState.IsValid)
         {
-            //Start validation
-            var files = HttpContext.Request.Form.Files;
-            foreach (var file in files)
-                if (file.IsImage() == false)
-                {
-                    ModelState.AddModelError("Project.ProjectImages",
-                        "There is an error with your images, please check them and try again.");
-
-                    return StatusCode(400, ModelState.AllErrors());
-                }
-
-            var error = false;
-            if (_civilityService.IsCivil(model.Project.Title).Verdict == false)
-            {
-                ModelState.AddModelError("Project.Title",
-                    "There is an error with your title, please check it and try again.");
-
-                error = true;
-            }
-
             model.Project.Slug = model.Project.Title.Slugify();
-            if (await _projectService.IsUniqueAsync(model.Project.Slug) == false)
+            var files = HttpContext.Request.Form.Files;
+
+            //Start validation
+            var errorList = await _validateService.ValidateProjectCreateModel(model, files);
+            if (errorList.Count > 0)
             {
-                ModelState.AddModelError("Project.Title",
-                    "Your title is not unique, please change it and try again.");
-
-                error = true;
-            }
-
-            if (_civilityService.IsCivil(model.Project.ProjectUrl).Verdict == false)
-            {
-                ModelState.AddModelError("Project.ProjectUrl",
-                    "There is an error with your URL, please check it and try again.");
-                error = true;
-            }
-
-            if (_civilityService.IsCivil(model.Project.Description).Verdict == false)
-            {
-                ModelState.AddModelError("Project.Description",
-                    "There is an error with your Description, please check it and try again.");
-                error = true;
-            }
-
-            if (!categoryList.Any() ||
-                categoryList.Count > enumSelectListItems.Count)
-            {
-                ModelState.AddModelError("Project.Categories",
-                    "Please make sure you have at least one category.");
-                error = true;
-            }
-
-
-            foreach (var projectCategory in categoryList)
-                if (_civilityService.IsCivil(projectCategory).Verdict == false)
-                {
-                    ModelState.AddModelError("Project.Categories",
-                        "There is an error with at least one of your category name, please check it and try again.");
-                    error = true;
-                    break;
-                }
-
-            model.Project.Categories = categoryList;
-
-
-            var masterCategoryList = enumSelectListItems.Select(e => e.Text).ToList();
-            var numberOfDifferences = categoryList.Count(cl => masterCategoryList.All(mcl => mcl != cl));
-            if (numberOfDifferences > 0) error = true;
-
-            //End validation
-            if (error)
-            {
-                var categorySelectItems = new List<SelectListItem>();
-                foreach (var category in categoryList)
-                {
-                    var selectListItem = new SelectListItem
-                    {
-                        Text = category,
-                        Value = category
-                    };
-                    categorySelectItems.Add(selectListItem);
-                }
-
-                model.ProjectSelectListItems = model.ProjectSelectListItems!.CreateProjectSelectListItems();
-                ViewBag.ProjectMultiSelectList =
-                    new MultiSelectList(model.ProjectSelectListItems, "Value", "Text", categorySelectItems);
-
+                foreach (var error in errorList) ModelState.AddModelError(error.Key, error.Value);
+                categorySelectItems = GetProjectCategoryList(categoryList);
+                model.ProjectSelectListItems = GetProjectSelectListItems(categorySelectItems);
                 return StatusCode(400, ModelState.AllErrors());
             }
 
-            model.Project.Created = DateTime.Now.ToUniversalTime();
-            await _projectService.AddProjectAsync(model.Project);
-            await _projectService.AddProjectCategoriesAsync(model.Project);
-            var projectSplashFile = files.OrderBy(f => f.FileName).Last();
-            await _openGraphService.AddOpenGraphProjectImageAsync(model.Project, projectSplashFile);
-            await _projectImageService.AddProjectImagesAsync(model.Project, files.ToList());
+            await _projectEntity.CreateProject(model, files);
             return StatusCode(201);
         }
 
-        var selectItemList = new List<SelectListItem>();
-        foreach (var category in categoryList)
-        {
-            var selectListItem = new SelectListItem
-            {
-                Text = category,
-                Value = category
-            };
-            selectItemList.Add(selectListItem);
-        }
+        GetProjectCategoryList(categoryList);
 
-        model.ProjectSelectListItems = model.ProjectSelectListItems!.CreateProjectSelectListItems();
-        ViewBag.ProjectMultiSelectList =
-            new MultiSelectList(model.ProjectSelectListItems, "Value", "Text", selectItemList);
-
+        categorySelectItems = GetProjectCategoryList(categoryList);
+        model.ProjectSelectListItems = GetProjectSelectListItems(categorySelectItems);
         return StatusCode(404, ModelState.AllErrors());
     }
 
@@ -259,32 +166,11 @@ public class ProjectsController : Controller
         var currentProjectIndex = projects.IndexOf(project);
 
         if (currentProjectIndex != projects.IndexOf(projects.Last())) nextProjectIndex = projects.IndexOf(project) + 1;
-
         if (currentProjectIndex != projects.IndexOf(projects.First())) lastProjectIndex = projects.IndexOf(project) - 1;
-
         if (nextProjectIndex != -1) ViewBag.NextProjectIndex = projects[nextProjectIndex].Slug!;
-
         if (lastProjectIndex != -1) ViewBag.LastProjectIndex = projects[lastProjectIndex].Slug!;
 
         return View(project);
-    }
-
-    #endregion
-
-    #region Project Search Action
-
-    public async Task<IActionResult> Search(string term, int? page)
-    {
-        var blogUserId = _userManager.GetUserId(User);
-        var pageNumber = page ?? 1;
-        var pageSize = 10;
-        var projects = await _projectService.GetAllProjectsAsync();
-
-        var result = projects
-            .Where(p => p.Title.ToLower().Contains(term.ToLower()));
-
-        //return posts to the author index view.
-        return View("AuthorIndex", await result.ToPagedListAsync(pageNumber, pageSize));
     }
 
     #endregion
@@ -303,9 +189,8 @@ public class ProjectsController : Controller
         //get base64 version of project images
         foreach (var projectImage in model.Project.ProjectImages!)
         {
-            var base64Image = Regex.Replace(_imageService.DecodeImage(projectImage.File, projectImage.FileContentType),
-                @"^data:image\/[a-zA-Z]+;base64,", string.Empty);
-
+            var base64Image = _imageService.DecodeImage(projectImage.File, projectImage.FileContentType);
+            base64Image = base64Image.Substring(base64Image.IndexOf(",", StringComparison.Ordinal) + 1);
             var imageDictionary = new Dictionary<string, string>();
             imageDictionary.Add("Image", base64Image);
             imageDictionary.Add("Name", projectImage.Name);
@@ -337,114 +222,24 @@ public class ProjectsController : Controller
     [Authorize(Roles = "Administrator")]
     public async Task<IActionResult> Edit(Guid id, [FromForm] ProjectEditViewModel model)
     {
-        var enumSelectListItems = new List<SelectListItem>().CreateProjectSelectListItems();
         var categoryList = model.Project.Categories.First().Split(',').ToList();
         if (ModelState.IsValid)
         {
             if (await ProjectExists(id) == false) return NotFound();
-            var newProject = await _projectService.GetProjectAsync(id);
-
-            newProject.Description = model.Project.Description;
-            newProject.Title = model.Project.Title;
-            newProject.ProjectUrl = model.Project.ProjectUrl;
-
-
-            //get base64 version of project images
-            foreach (var projectImage in newProject.ProjectImages!)
-            {
-                var base64Image = _imageService.DecodeImage(projectImage.File, projectImage.FileContentType);
-
-                var imageDictionary = new Dictionary<string, string>();
-                imageDictionary.Add("Image", base64Image);
-                imageDictionary.Add("Name", projectImage.Name);
-                model.Base64Images.Add(imageDictionary);
-            }
-
-            var options = new JsonSerializerOptions
-            {
-                ReferenceHandler = ReferenceHandler.IgnoreCycles
-            };
-
-            ViewBag.ImageList = JsonSerializer.Serialize(model.Base64Images, options);
-            ViewBag.Images = model.Base64Images;
+            model.Project.Id = id;
+            model.Project.Slug = model.Project.Title.Slugify();
+            SetBase64ProjectImages(model);
 
             //Start validation
             var files = HttpContext.Request.Form.Files;
-            foreach (var file in files.OrderByDescending(f => f.FileName))
-                if (file.IsImage() == false)
-                {
-                    ModelState.AddModelError("Project.ProjectImages",
-                        "There is an error with your images, please check them and try again.");
-
-                    return StatusCode(400, ModelState.AllErrors());
-                }
-
-            var error = false;
-            if (_civilityService.IsCivil(model.Project.Title).Verdict == false)
+            var errorList = await _validateService.ValidateProjectEditModel(model, files);
+            if (errorList.Count > 0)
             {
-                ModelState.AddModelError("Project.Title",
-                    "There is an error with your title, please check it and try again.");
-
-                error = true;
+                foreach (var error in errorList) ModelState.AddModelError(error.Key, error.Value);
+                return StatusCode(400, ModelState.AllErrors());
             }
 
-            model.Project.Slug = model.Project.Title.Slugify();
-            if (model.Project.Slug != newProject.Slug &&
-                await _projectService.IsUniqueAsync(model.Project.Slug) == false)
-            {
-                ModelState.AddModelError("Project.Title",
-                    "Your title is not unique, please change it and try again.");
-
-                error = true;
-            }
-
-            if (_civilityService.IsCivil(model.Project.ProjectUrl).Verdict == false)
-            {
-                ModelState.AddModelError("Project.ProjectUrl",
-                    "There is an error with your URL, please check it and try again.");
-                error = true;
-            }
-
-            if (_civilityService.IsCivil(model.Project.Description).Verdict == false)
-            {
-                ModelState.AddModelError("Project.Description",
-                    "There is an error with your Description, please check it and try again.");
-                error = true;
-            }
-
-            if (!categoryList.Any() ||
-                categoryList.Count > enumSelectListItems.Count)
-            {
-                ModelState.AddModelError("Project.Categories",
-                    "Please make sure you have at least one category.");
-                error = true;
-            }
-
-            foreach (var projectCategory in categoryList)
-                if (_civilityService.IsCivil(projectCategory).Verdict == false)
-                {
-                    ModelState.AddModelError("Project.Categories",
-                        "There is an error with at least one of your category name, please check it and try again.");
-                    error = true;
-                    break;
-                }
-
-            newProject.Categories = categoryList;
-
-            var masterCategoryList = enumSelectListItems.Select(e => e.Text).ToList();
-            var numberOfDifferences = categoryList.Count(cl => masterCategoryList.All(mcl => mcl != cl));
-            if (numberOfDifferences > 0) error = true;
-
-            //End validation
-            if (error) return StatusCode(400, ModelState.AllErrors());
-
-            newProject.Slug = model.Project.Slug;
-            await _projectService.UpdateProjectAsync(newProject);
-            await _projectService.RemoveStaleCategoriesAsync(newProject);
-            await _projectService.AddProjectCategoriesAsync(newProject);
-            await _projectImageService.RemoveStaleProjectImagesAsync(newProject);
-            await _projectImageService.AddProjectImagesAsync(newProject, files.ToList());
-
+            await _projectEntity.EditProject(model, files);
             return StatusCode(200);
         }
 
@@ -454,10 +249,69 @@ public class ProjectsController : Controller
 
     #endregion
 
+    private List<SelectListItem> GetProjectCategoryList(List<string> categoryList)
+    {
+        var selectItemList = new List<SelectListItem>();
+        foreach (var category in categoryList)
+        {
+            var selectListItem = new SelectListItem
+            {
+                Text = category,
+                Value = category
+            };
+            selectItemList.Add(selectListItem);
+        }
+
+        return selectItemList;
+    }
+
+    private List<SelectListItem> GetProjectSelectListItems(List<SelectListItem> categoryList)
+    {
+        //generate project select list items
+        var result = new List<SelectListItem>();
+        result.CreateProjectSelectListItems();
+
+        //init project multi select list to view bag
+        ViewBag.ProjectMultiSelectList =
+            new MultiSelectList(result, "Value", "Text", categoryList);
+
+        //return selectList
+        return result;
+    }
+
     private async Task<bool> ProjectExists(Guid id)
     {
         var project = await _projectService.GetProjectAsync(id);
         if (project.Id == new Guid()) return false;
         return true;
+    }
+
+    #region Project Search Action
+
+    public async Task<IActionResult> Search(string term, int? page)
+    {
+        var blogUserId = _userManager.GetUserId(User);
+        var pageNumber = page ?? 1;
+        var pageSize = 10;
+        var projects = await _projectService.GetAllProjectsAsync();
+
+        var result = projects
+            .Where(p => p.Title.ToLower().Contains(term.ToLower()));
+
+        //return posts to the author index view.
+        return View("AuthorIndex", await result.ToPagedListAsync(pageNumber, pageSize));
+    }
+
+    #endregion
+
+    private void SetBase64ProjectImages(ProjectEditViewModel model)
+    {
+        var options = new JsonSerializerOptions
+        {
+            ReferenceHandler = ReferenceHandler.IgnoreCycles
+        };
+
+        ViewBag.ImageList = JsonSerializer.Serialize(model.Base64Images, options);
+        ViewBag.Images = model.Base64Images;
     }
 }

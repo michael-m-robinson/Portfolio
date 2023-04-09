@@ -21,16 +21,16 @@ namespace Portfolio.Controllers;
 [Breadcrumb("Blogs")]
 public class BlogsController : Controller
 {
-    private readonly IMWSValidateService _validateService;
-    private readonly IMWSBlogService _blogService;
     private readonly IMWSBlogEntityService _blogEntityService;
+    private readonly IMWSBlogService _blogService;
     private readonly IMWSCategoryService _categoryService;
     private readonly UserManager<BlogUser> _userManager;
+    private readonly IMWSValidateService _validateService;
 
     public BlogsController(UserManager<BlogUser> userManager,
         IMWSBlogService blogService,
         IMWSCategoryService categoryService,
-        IMWSValidateService validateService, 
+        IMWSValidateService validateService,
         IMWSBlogEntityService blogEntityService)
     {
         _userManager = userManager;
@@ -101,20 +101,19 @@ public class BlogsController : Controller
             model.Blog.Slug = model.Blog.Name.Slugify();
             var errorList = await _validateService.ValidateBlogCreateModel(model);
             if (errorList.Count > 0)
-            {
                 foreach (var error in errorList)
                 {
                     ModelState.AddModelError(error.Key, error.Value);
                     model = await GetBlogCreateEditViewModelData(model);
                     return View(model);
                 }
-            }
+
             await _blogEntityService.CreateBlog(model);
             return RedirectToAction(nameof(Index));
         }
 
         //Model state is not valid, return user to create view.
-        
+
         ModelState.AddModelError("",
             "There has been an error if this continues, please contact the administrator.");
         model = await GetBlogCreateEditViewModelData(model);
@@ -203,10 +202,10 @@ public class BlogsController : Controller
     {
         var currentBlog = await _blogService.GetBlogBySlugAsync(slug);
         if (currentBlog.Id == new Guid()) return NotFound();
-        
+
         SetBlogDetailsBreadCrumbs(currentBlog);
         var model = await _blogEntityService.ListBlog(currentBlog, page);
-        
+
         return View(model);
     }
 
@@ -221,7 +220,7 @@ public class BlogsController : Controller
     {
         var currentBlog = await _blogService.GetBlogBySlugAsync(slug);
         var model = await _blogEntityService.ListBlogByCategory(currentBlog, page, categoryName);
-        
+
         if (ModelState.IsValid)
         {
             if (currentBlog.Id == new Guid()) return NotFound();
@@ -260,7 +259,7 @@ public class BlogsController : Controller
     [HttpPost]
     [Authorize(Roles = "Administrator")]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(Guid id, [FromForm]BlogCreateEditViewModel model)
+    public async Task<IActionResult> Edit(Guid id, [FromForm] BlogCreateEditViewModel model)
     {
         if ((await _blogService.GetBlogAsync(id)).Id == new Guid()) return NotFound();
         if (ModelState.IsValid)
@@ -269,14 +268,13 @@ public class BlogsController : Controller
             model.Blog.Slug = model.Blog.Name.Slugify();
             var errorList = await _validateService.ValidateBlogEditModel(model);
             if (errorList.Count > 0)
-            {
                 foreach (var error in errorList)
                 {
                     ModelState.AddModelError(error.Key, error.Value);
                     model = await GetBlogCreateEditViewModelData(model);
                     return View(model);
                 }
-            }
+
             await _blogEntityService.EditBlog(model, id);
             return RedirectToAction(nameof(Index));
         }
@@ -304,6 +302,18 @@ public class BlogsController : Controller
     }
 
     #endregion
+
+    private async Task<BlogCreateEditViewModel> GetBlogCreateEditViewModelData(BlogCreateEditViewModel model)
+    {
+        model.Blog = await _blogService.GetBlogAsync(model.Blog.Id);
+        model.ImageFile = default!;
+        model.Blog.Image = null;
+        model.Blog.ImageType = null;
+        model.CategoryValues = model.Blog.Categories!.Select(c => c.Name).OrderBy(c => c).ToList();
+        model.AuthorId = _userManager.GetUserId(User);
+
+        return model;
+    }
 
     #region Blog categories get action
 
@@ -339,7 +349,7 @@ public class BlogsController : Controller
         if (model.Blog.Id == new Guid()) return NotFound();
         SetBlogPostSearchBreadCrumbs(model.Blog, slug, page, term);
         ViewBag.SearchTerm = term;
-        
+
         return View("Details", model);
     }
 
@@ -363,44 +373,6 @@ public class BlogsController : Controller
 
     #endregion
 
-    #region Blog Tag get action
-
-    [HttpGet]
-    [Route("/Blog/{slug}/Tag/{tag}/Page/{page}")]
-    public async Task<IActionResult> Tag(int? page, string tag, string slug)
-    {
-        ViewBag.Tag = tag;
-        var model = await _blogEntityService.ListBlogByTag(tag, slug, page);
-        SetBlogTagBreadCrumbs(model.Blog, tag, slug);
-        return View("Details", model);
-    }
-
-    #endregion
-
-    private async Task<BlogCreateEditViewModel> GetBlogCreateEditViewModelData(BlogCreateEditViewModel model)
-    {
-        model.Blog = await _blogService.GetBlogAsync(model.Blog.Id);
-        model.ImageFile = default!;
-        model.Blog.Image = null;
-        model.Blog.ImageType = null;
-        model.CategoryValues = model.Blog.Categories!.Select(c => c.Name).OrderBy(c => c).ToList();
-        model.AuthorId = _userManager.GetUserId(User);
-
-        return model;
-    }
-
-    private void SetBlogDetailsBreadCrumbs(Blog model)
-    {
-        var blogsNode = new MvcBreadcrumbNode("AllBlogs", "Blogs", "Blogs");
-        var blogNode = new MvcBreadcrumbNode("Details", "Blogs", model.Name)
-        {
-            RouteValues = new { slug = model.Slug },
-            Parent = blogsNode
-        };
-        
-        ViewData["BreadcrumbNode"] = blogNode;
-    }
-
     private void SetBlogCategoryDetailsBreadCrumbs(Blog model, string slug, int? page, string categoryName)
     {
         var blogsNode = new MvcBreadcrumbNode("AllBlogs", "Blogs", "Blogs");
@@ -418,6 +390,18 @@ public class BlogsController : Controller
         };
 
         ViewData["BreadcrumbNode"] = categoryNode;
+    }
+
+    private void SetBlogDetailsBreadCrumbs(Blog model)
+    {
+        var blogsNode = new MvcBreadcrumbNode("AllBlogs", "Blogs", "Blogs");
+        var blogNode = new MvcBreadcrumbNode("Details", "Blogs", model.Name)
+        {
+            RouteValues = new { slug = model.Slug },
+            Parent = blogsNode
+        };
+
+        ViewData["BreadcrumbNode"] = blogNode;
     }
 
     private void SetBlogPostSearchBreadCrumbs(Blog model, string slug, int? page, string term)
@@ -454,4 +438,18 @@ public class BlogsController : Controller
 
         ViewData["BreadcrumbNode"] = tagNode;
     }
+
+    #region Blog Tag get action
+
+    [HttpGet]
+    [Route("/Blog/{slug}/Tag/{tag}/Page/{page}")]
+    public async Task<IActionResult> Tag(int? page, string tag, string slug)
+    {
+        ViewBag.Tag = tag;
+        var model = await _blogEntityService.ListBlogByTag(tag, slug, page);
+        SetBlogTagBreadCrumbs(model.Blog, tag, slug);
+        return View("Details", model);
+    }
+
+    #endregion
 }

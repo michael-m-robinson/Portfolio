@@ -13,7 +13,6 @@ using Portfolio.Models.Settings;
 using Portfolio.Models.ViewModels;
 using Portfolio.Services;
 using Portfolio.Services.Interfaces;
-using SixLabors.ImageSharp.Web.DependencyInjection;
 using SmartBreadcrumbs.Extensions;
 
 #endregion
@@ -74,6 +73,7 @@ builder.Services.AddScoped<IMWSOpenGraphService, MWSOpenGraphService>();
 builder.Services.AddScoped<IMWSBlogEntityService, MWSBlogEntityService>();
 builder.Services.AddScoped<IMWSPostEntityService, MWSPostEntityService>();
 builder.Services.AddScoped<IMWSValidateService, MWSValidateService>();
+builder.Services.AddScoped<IMWSProjectEntityService, MWSProjectEntityService>();
 
 builder.Services.AddBreadcrumbs(Assembly.GetExecutingAssembly(), options =>
 {
@@ -85,10 +85,7 @@ builder.Services.AddBreadcrumbs(Assembly.GetExecutingAssembly(), options =>
     options.SeparatorElement = string.Empty;
 });
 
-builder.Services.AddResponseCompression(options =>
-{
-    options.EnableForHttps = true;
-});
+builder.Services.AddResponseCompression(options => { options.EnableForHttps = true; });
 
 var app = builder.Build();
 
@@ -109,7 +106,7 @@ app.UseHttpsRedirection();
 app.UseDefaultFiles();
 
 var osDirectory = string.Empty;
-if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX) 
+if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX)
     || RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
 {
     Console.WriteLine("We're on Unix!");

@@ -41,7 +41,7 @@ public class MWSImageService : IMWSImageService
         var bytes = new byte[image.Length];
         imageStream.Read(bytes, 0, (int)image.Length);
         imageStream.Close();
-        
+
         return bytes;
     }
 

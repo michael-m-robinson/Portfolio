@@ -20,6 +20,8 @@ public class MWSProjectImageService : IMWSProjectImageService
         _context = context;
     }
 
+    #region Add Project Images
+
     public async Task AddProjectImagesAsync(Project project, List<IFormFile> files)
     {
         var model = new ProjectImage();
@@ -51,6 +53,10 @@ public class MWSProjectImageService : IMWSProjectImageService
         }
     }
 
+    #endregion
+
+    #region Remove Stale Project Images
+    
     public async Task RemoveStaleProjectImagesAsync(Project project)
     {
         try
@@ -69,4 +75,8 @@ public class MWSProjectImageService : IMWSProjectImageService
             throw;
         }
     }
+
+    #endregion
+
+    
 }

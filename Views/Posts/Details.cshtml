@@ -16,7 +16,7 @@
         currentUser = await UserManager.FindByIdAsync(UserManager.GetUserId(User)!);
     }
 
-    var authorUser = await UserManager.FindByIdAsync(Model.Post!.AuthorId);
+    var authorUser = await UserManager.FindByIdAsync(Model.Post.AuthorId);
     var commentBody = TempData["Comment"] as string;
     var openGraphImage = $"https://{Context.Request.Host}/ArticleImages/PostImages/{Model.Post.Slug}.png";
 }
@@ -135,19 +135,19 @@ else
                 </div>
                 <div class="post-author">
                     <div class="post-author-image">
-                        <a href="#0">
+                        <a href="@("#0")">
                             @if (authorUser?.Image == default)
                             {
                                 <img src="~/imgs/michael-robinson.jpg" alt="Michael M. Robinson">
                             }
                             else
                             {
-                                <img src="@ImageService.DecodeImage(authorUser!.Image!, authorUser.ImageType!)" alt="Michael M. Robinson">
+                                <img src="@ImageService.DecodeImage(authorUser.Image, authorUser.ImageType!)" alt="Michael M. Robinson">
                             }
                         </a>
                     </div>
                     <div class="post-author-text">
-                        <a href="#0" class="post-author-name">@authorUser.FullName</a>
+                        <a href="@("#0")" class="post-author-name">@authorUser!.FullName!</a>
                         <p class="post-author-paragraph">@authorUser.AuthorDescription</p>
                     </div>
                 </div>

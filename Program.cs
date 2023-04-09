@@ -17,11 +17,11 @@ using SmartBreadcrumbs.Extensions;
 
 #endregion
 
-var builder = WebApplication.CreateBuilder();
-
 var configuration = new ConfigurationBuilder()
     .AddJsonFile("appsettings.json")
     .Build();
+
+var builder = WebApplication.CreateBuilder();
 
 builder.Services.Configure<AppSettings>(configuration.GetSection("AppSettings"));
 
@@ -87,13 +87,14 @@ builder.Services.AddBreadcrumbs(Assembly.GetExecutingAssembly(), options =>
 
 builder.Services.AddResponseCompression(options => { options.EnableForHttps = true; });
 
-var app = builder.Build();
 
+var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
     app.UseMigrationsEndPoint();
     app.UseStatusCodePagesWithRedirects("/Error/{0}");
 }
+
 else
 {
     app.UseExceptionHandler("/Home/Error");
@@ -134,6 +135,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllerRoute(
+    "Post-details",
     "Post-details",
     "Blog/{blogSlug}/Post/{slug}",
     new { Controller = "Posts", Action = "Details" });

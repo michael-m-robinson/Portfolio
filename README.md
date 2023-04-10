@@ -2,7 +2,7 @@
 
 This is a project written in ASP.NET 7. The purpose of sharing this with the GitHub community is to show the code that I crafted.
 
-I originally built this project because I wanted to start a blog to chronical my coding Journy. So I thought, if I am serious about coding, why not make my first major project a small custom CMS? I am constantly improving this work, so it should be no surprise if the way I write the code changes.
+I originally built this project because I wanted to start a blog to chronicle my coding journey. So I thought, if I am serious about coding, why not make my first major project a small custom CMS? I am constantly improving this work, so it should be no surprise if the codebase changes over time.
 
 # Features
 
@@ -19,30 +19,30 @@ I originally built this project because I wanted to start a blog to chronical my
 
 # Setting up the development environment
 
-To run a local copy of the code, please make sure you have the following packages installed:
+To run a local copy of the code, you will have to compile it from source. Please make sure you have the following free software to do so:
 
-[Microsoft .NET 7 Runtime X64](https://dotnet.microsoft.com/en-us/download/dotnet/7.0)
+[Microsoft Visual Studio Community 2022](https://visualstudio.microsoft.com/downloads/)
 
-[Entity Framework Core v6.2.0+]()
+- IMPORTANT: When you install visual studio, make sure **ASP.NET and web development** is check (shown below).
+  ![visualstudioinstall.png](docpics/visualstudioinstall.png)
+
+[Entity Framework Core v6.2.0+](https://learn.microsoft.com/en-us/ef/core/cli/dotnet#installing-the-tools)
 
 [Oracle MySQL v8.0.32+](https://dev.mysql.com/downloads/)
 
 # Running the software
 
-## A Word of warning
+## A word of warning
 
 The purpose of making this repo public is perusal. There are external services that are needed and errors will occur if you try to run this code without them. If you want to set up these services to get a copy of this code running on your machine, please follow the steps below.
 
-1.  Create an empty directory to hold the application (the directory I've chosen can be seen in the screenshot below).
-    ![Screenshot One](/docpics/img.png)
+1.  Use Git to clone the repo to your machine.
 
-2.  In the directory you've created, add a folder named `ArticleImages` this is case-sensitive (see below).
-    ![Screenshot Two](/docpics/img2.png)
+2.  Once the repo has is on your machine, open the solution in visual studio.
 
-3.  After you've created the `ArticleImages` folder, unzip the release into the folder you've made to hold the application (shown below).
-    ![Screenshot Three](/docpics/img3.png)
+3.  If you haven't done so already, make sure that EFCore is installed globally on your machine. You can do this from the command line by running the following `dotnet tool install --global dotnet-ef`.
 
-4.  Inside of the release folder, edit the accompanying appsettings.json (See below, and replace information in brackets with your information, please do not include the brackets when entering your info 😁).
+4.  In the root of the project folder, you will find appsettings.json.sample, rename the file to appsettings.json and fill it out to match your setup (See below, and replace information in brackets with your information, please do not include the brackets when entering your info 😁).
 
     ```JSON
     {
@@ -78,10 +78,25 @@ The purpose of making this repo public is perusal. There are external services t
       }
     }
     ```
+5.  In visual studio, under the Solution explorer, right click the solution and select Build (shown below). This will create a **bin** folder in the **project** folder.
+    ![visualstudiobuild.png](docpics/visualstudiobuild.png)
 
-5.  Once your json file is correct and the prerequisites have been installed, run the accompanying executable called, `efbundle.exe` this file will automatically setup the database.
+6.  Navigate to **Portfolio** > **bin** > **debug** > **net7.0** and place your custom **appsettings.json** file in the directory (shown below).
+    ![explorerappsettings.png](docpics/explorerappsettings.png)
 
-6.  With the database built run the app by executing the following command `dotnet exec portfolio.dll`, you should output similar to the screenshot below. Look for the a URL with localhost (shown below), and type it into your browser. You should have a live version of the website running locally.
+7.  Navigate one directory up from **Portfolio** and create a directory called **ArticleImages** (shown below) This will hold images for most entities in the application.
+    ![explorerportfolio.png](docpics/explorerportfolio.png)
+
+8.  In visual studio, go to Tools > NuGet Package Manager > Package Manager Console (shown below). This will open a new tab in Visual Studio.
+    ![visualstudionuget.png](docpics/visualstudionuget.png) 
+
+9.  In the package manager console, type `Update-Database` (shown below).
+    ![visualstudioupdatedatabase.png](docpics/visualstudioupdatedatabase.png)
+
+10. With all of these steps complete, you can now execute the program (shown below).
+    ![img.png](docpics/visualstudiorun.png)
+
+Thanks for you interest in this code, if you have any questions on getting the project setup, please reach out through [email](mailto:michael.robinson@mikemrobinsondev.com?subject=I%20need%20help%20setting%20up%20your%20portfolio%20code&body=I%20need%20help%20with%20your%20project%20code.)
 
 ![ShieldOne](https://img.shields.io/github/license/michael-m-robinson/Portfolio?style=flat-square)![ShieldTwo](https://img.shields.io/github/issues/michael-m-robinson/Portfolio?style=flat-square) 
 ![ShieldThree](https://img.shields.io/twitter/follow/MichaelMRobins4?style=social)

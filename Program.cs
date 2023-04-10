@@ -124,7 +124,7 @@ app.UseStaticFiles();
 var env = app.Environment;
 app.UseStaticFiles(new StaticFileOptions
 {
-    FileProvider = new PhysicalFileProvider(Path.Combine(env.ContentRootPath, "..\\ArticleImages")),
+    FileProvider = new PhysicalFileProvider(Path.Combine(env.ContentRootPath, osDirectory)),
     RequestPath = "/ArticleImages"
 });
 

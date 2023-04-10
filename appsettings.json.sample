@@ -1,0 +1,32 @@
+{
+      "ConnectionStrings": {
+        "Production": "server=[MySQL Server IP Address];userid=[MySQL UserName];pwd=[MySQL Password];port=3306;database=portfolio;"
+      },
+    
+      "GoogleAccount": {
+        "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+        "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+        "client_id": "[Your Google Client ID]",
+        "client_secret": "[Your Google Secret]",
+        "project_id": "[Your Google Client ID]",
+        "redirect_uris": ["Your redirect URI"],
+        "token_uri": "https://oauth2.googleapis.com/token"
+      },
+    
+      "AppSettings": {
+        "MailSettings": {
+          "DisplayName": "[Your Display Name]",
+          "Host": "[Your SMTP Server]",
+          "Mail": "[Your SMTP Email Address]",
+          "Password": "[Your SMTP Email Password]",
+          "Port": 587
+        }
+      },
+    
+      "ReCaptcha": {
+        "SiteKey": "[Your Recaptcha Site Key]",
+        "SecretKey": "[Your Recaptcha Secret]",
+        "Version": "v2",
+        "UseRecaptchaNet": false
+      }
+}

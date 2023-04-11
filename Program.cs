@@ -136,7 +136,6 @@ app.UseAuthorization();
 
 app.MapControllerRoute(
     "Post-details",
-    "Post-details",
     "Blog/{blogSlug}/Post/{slug}",
     new { Controller = "Posts", Action = "Details" });
 

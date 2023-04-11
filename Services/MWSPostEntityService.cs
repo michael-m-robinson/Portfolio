@@ -1,6 +1,5 @@
 ﻿#region Imports
 
-using System.Net;
 using System.Web;
 using Portfolio.Extensions;
 using Portfolio.Models.Content;
@@ -82,7 +81,7 @@ public class MWSPostEntityService : IMWSPostEntityService
         };
 
         model.PostId = model.Post.Id;
-        model.Post.Content = WebUtility.HtmlDecode(model.Post.Content);
+        //model.Post.Content = WebUtility.HtmlDecode(model.Post.Content);
         model.RecentArticles = await _postService.GetTopFivePostsByDateAsync(model.Post.BlogId);
         var tagList = await _tagService.GetTopTwentyBlogTagsAsync(model.Post.BlogId);
         model.BlogTags = await tagList.Select(t => t.Text).Distinct().ToListAsync();

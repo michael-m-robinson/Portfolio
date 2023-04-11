@@ -259,7 +259,7 @@ public class PostsController : Controller
         if (currentPost.Id == new Guid()) return NotFound();
 
         //Populate post image
-        model.Post.Image = currentPost.Image;
+        model.Post!.Image = currentPost.Image;
         model.Post.ImageType = currentPost.ImageType;
 
         if (ModelState.IsValid)

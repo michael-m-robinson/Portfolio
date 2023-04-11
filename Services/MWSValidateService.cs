@@ -127,7 +127,10 @@ public class MWSValidateService : IMWSValidateService
                 "There is foul language in the abstract section of this post, please revise.");
 
         var noHtmlContent =
-            WebUtility.HtmlDecode(Regex.Replace(model.Post.Content.RemoveHtmlTags(), "<[^>]*(>|$)", string.Empty));
+            Regex.Replace(WebUtility.HtmlDecode(model.Post.Content.RemoveHtmlTags()), "<[^>]*(>|$)", string.Empty);
+        noHtmlContent =
+            Regex.Replace(WebUtility.HtmlDecode(noHtmlContent), "<[^>]*(>|$)", string.Empty);
+
         if (_civilityService.IsCivil(noHtmlContent).Verdict == false)
             errorList.Add("Post.Content",
                 "There is foul language in the body of this post, please revise.");
@@ -163,8 +166,10 @@ public class MWSValidateService : IMWSValidateService
         if (_civilityService.IsCivil(model.Post.Title).Verdict == false)
             errorList.Add("Post.Title", "There is foul language in the title, please revise.");
 
-        var noHtmlContent = WebUtility.HtmlDecode(Regex.Replace(model.Post.Content.RemoveHtmlTags(),
-            "<[^>]*(>|$)", string.Empty));
+        var noHtmlContent =
+            Regex.Replace(WebUtility.HtmlDecode(model.Post.Content.RemoveHtmlTags()), "<[^>]*(>|$)", string.Empty);
+        noHtmlContent =
+            Regex.Replace(WebUtility.HtmlDecode(noHtmlContent), "<[^>]*(>|$)", string.Empty);
         if (_civilityService.IsCivil(noHtmlContent).Verdict == false)
             errorList.Add("Post.Content",
                 "There is foul language in the body of this post, please revise.");

@@ -38,9 +38,9 @@
                 <form id="postForm" method="Post" asp-action="Create" asp-controller="Posts" enctype="multipart/form-data">
                     <div asp-validation-summary="ModelOnly" class="text-danger"></div>
                     <input type="hidden" asp-for="Post.AuthorId" value="@UserManager.GetUserId(User)"/>
-                    <input type="hidden" asp-for="Post.Blog.Name" value="" />
+                    <input type="hidden" asp-for="Post.Blog.Name" />
                     <input type="hidden" asp-for="Post.Blog.AuthorId" value="@UserManager.GetUserId(User)" />
-                    <input type="hidden" asp-for="Post.Blog.Description" value="" />
+                    <input type="hidden" asp-for="Post.Blog.Description" />
                     <input type="hidden" asp-for="Post.Author.LastName" value="@author?.LastName" />
                     <input type="hidden" asp-for="Post.Author.FirstName" value="@author?.FirstName" />
 

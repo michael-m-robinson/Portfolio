@@ -119,7 +119,6 @@
 
     function setBlogInformation(result) {
         const blog = result.blogJson;
-        console.log(blog);
         document.querySelector(`[name='Post.Blog.Name']`).value = blog.name;
         document.querySelector(`[name='Post.Blog.Description']`).value = blog.description;
     }

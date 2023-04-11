@@ -84,16 +84,13 @@ The purpose of making this repo public is perusal. There are external services t
 6.  Navigate to **Portfolio** > **bin** > **debug** > **net7.0** and place your custom **appsettings.json** file in the directory (shown below).
     ![explorerappsettings.png](docpics/explorerappsettings.png)
 
-7.  Navigate one directory up from **Portfolio** and create a directory called **ArticleImages** (shown below) This will hold images for most entities in the application.
-    ![explorerportfolio.png](docpics/explorerportfolio.png)
-
-8.  In visual studio, go to Tools > NuGet Package Manager > Package Manager Console (shown below). This will open a new tab in Visual Studio.
+7.  In visual studio, go to Tools > NuGet Package Manager > Package Manager Console (shown below). This will open a new tab in Visual Studio.
     ![visualstudionuget.png](docpics/visualstudionuget.png) 
 
-9.  In the package manager console, type `Update-Database` (shown below).
+8.  In the package manager console, type `Update-Database` (shown below).
     ![visualstudioupdatedatabase.png](docpics/visualstudioupdatedatabase.png)
 
-10. With all of these steps complete, you can now execute the program (shown below).
+9.  With all of these steps complete, you can now execute the program (shown below).
     ![img.png](docpics/visualstudiorun.png)
 
 Thanks for you interest in this code, if you have any questions on getting the project setup, please reach out through [email](mailto:michael.robinson@mikemrobinsondev.com?subject=I%20need%20help%20setting%20up%20your%20portfolio%20code&body=I%20need%20help%20with%20your%20project%20code.)

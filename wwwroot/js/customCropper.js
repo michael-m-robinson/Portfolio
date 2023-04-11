@@ -27,8 +27,6 @@ input.addEventListener('change', () => {
         imageHeight = 718;
     }
 
-    console.log(imageHeight);
-
     cropper = new Cropper(image, {
         autoCropArea: 1,
         toggleDragModeOnDblclick: false,

@@ -322,6 +322,10 @@ public class BlogsController : Controller
     {
         var categoryList = await _categoryService.GetCategoriesAsync(id);
         var blog = await _blogService.GetBlogAsync(id);
+
+        //Remove un-needed posts.
+        blog.Posts = default!;
+
         return Json(new { categoryListJson = categoryList, blogJson = blog });
     }
 

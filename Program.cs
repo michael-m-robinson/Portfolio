@@ -111,12 +111,12 @@ if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX)
     || RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
 {
     Console.WriteLine("We're on Unix!");
-    osDirectory = "../ArticleImages";
+    osDirectory = "ArticleImages";
 }
 else
 {
     Console.WriteLine("We're on Windows!");
-    osDirectory = "..\\ArticleImages";
+    osDirectory = "ArticleImages";
 }
 
 app.UseStaticFiles();

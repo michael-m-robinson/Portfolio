@@ -1461,5 +1461,6 @@
 
     <ItemGroup>
       <Folder Include="Migrations\" />
+      <Folder Include="ArticleImages\" />
     </ItemGroup>
 </Project>

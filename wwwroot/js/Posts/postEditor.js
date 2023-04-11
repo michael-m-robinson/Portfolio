@@ -53,7 +53,7 @@ $('document').ready(function () {
     //Initialize tinymce
     tinymce.init({
         selector: `[name='Post.Content']`,
-        plugins: 'image',
+        plugins: 'image codesample',
         images_upload_handler: image_handler,
         setup: function (editor) {
             editor.on('init', function (e) {

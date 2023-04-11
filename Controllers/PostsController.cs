@@ -153,6 +153,7 @@ public class PostsController : Controller
     {
         if (ModelState.IsValid)
         {
+            model.Post.Slug = model.Post.Title.Slugify();
             var errorList = await _validateService.ValidatePostCreateModel(model);
             if (errorList.Count > 0)
                 foreach (var error in errorList)
@@ -265,6 +266,7 @@ public class PostsController : Controller
 
         if (ModelState.IsValid)
         {
+            model.Post.Slug = model.Post.Title.Slugify();
             var errorList = await _validateService.ValidatePostEditModel(model);
             if (errorList.Count > 0)
                 foreach (var error in errorList)

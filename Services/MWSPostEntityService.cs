@@ -34,7 +34,6 @@ public class MWSPostEntityService : IMWSPostEntityService
 
     public async Task CreatePost(PostCreateViewModel model)
     {
-        model.Post.Slug = model.Post.Title.Slugify();
         model.Post.Created = DateTimeOffset.Now;
         model.Post.Image = await _imageService.EncodeImageAsync(model.ImageFile);
         model.Post.ThumbNail = await _imageService.CreateThumbnailAsync(model.ImageFile);

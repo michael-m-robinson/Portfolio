@@ -205,6 +205,7 @@ public class PostsController : Controller
     #region Post details get action
 
     [HttpGet]
+    [Route("/Blog/{blogSlug}/Post/{slug}")]
     public async Task<IActionResult> Details(string slug, string blogSlug)
     {
         if (string.IsNullOrEmpty(slug)) return BadRequest();

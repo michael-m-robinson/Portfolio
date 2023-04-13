@@ -440,7 +440,7 @@
         outClass: 'fade-out',
         inDuration: 500,
         outDuration: 500,
-        linkElement: 'a:not([target="_blank"]):not([href^="#"]):not([class^="chosen-single"])',
+        linkElement: 'a:not([target="_blank"]):not([href^="#"]):not([class^="chosen-single"]):not([class^="nav-link chosen-single"]):not([id^="contact-button"])',
         loading: true,
         loadingParentElement: 'html',
         loadingClass: 'loader-wrapper',

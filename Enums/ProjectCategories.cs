@@ -8,8 +8,7 @@ namespace Portfolio.Enums;
 
 public enum ProjectCategories
 {
-    [Display(Name = "PROJECTS")] Projects,
-    [Display(Name = "CHALLENGES")] Challenges,
+    [Display(Name = "JavaScript")] Html,
     [Display(Name = "DOT-NET")] Net,
-    [Display(Name = "HTML-5")] Html
+    [Display(Name = "Python")] Python
 }

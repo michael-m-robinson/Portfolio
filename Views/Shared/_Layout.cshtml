@@ -29,14 +29,11 @@
     <link href="~/vendor/revolution/css/settings.css" rel="stylesheet"/>
 
     <!--Custom CSS-->
-    <link rel="stylesheet" href="~/css/global/custom.css" />
+    <link rel="stylesheet" href="~/css/global/custom.css"/>
     @await RenderSectionAsync("CustomCss", false);
 
     <!-- Main CSS-->
     <link href="~/css/layout/theme.min.css" rel="stylesheet" media="all"/>
-
-    <!-- Jquery JS-->
-    <script src="~/vendor/jquery/jquery.min.js"></script>
 
     <!--JavaScript-->
     @await RenderSectionAsync("TopScripts", false);
@@ -66,20 +63,20 @@
                                 <a class="nav-link" asp-action="Index" asp-controller="Home">HOME</a>
                             </li>
                             <li class="nav-item">
-                                    <a id="aboutMeLink" class="nav-link chosen-single" asp-controller="home" asp-action="Index" asp-fragment="about-me">ABOUT ME</a>
+                                <a id="aboutMeLink" class="nav-link chosen-single" asp-controller="home" asp-action="Index" asp-fragment="about-me">ABOUT ME</a>
                             </li>
                             <li class="nav-item">
-                                    <a id="portfolioLink" class="nav-link chosen-single" asp-controller="home" asp-action="Index" asp-fragment="portfolio">PORTFOLIO</a>
+                                <a id="portfolioLink" class="nav-link chosen-single" asp-controller="home" asp-action="Index" asp-fragment="portfolio">PORTFOLIO</a>
                             </li>
                             <li class="nav-item">
-                                    <a id="blogsLink" class="nav-link" asp-action="Index" asp-controller="Blogs">BLOGS</a>
+                                <a id="blogsLink" class="nav-link" asp-action="Index" asp-controller="Blogs">BLOGS</a>
                             </li>
                             <partial name="_LoginPartial"/>
                         </ul>
                     </nav>
                 </div>
                 <div class="header-bar-featured d-none d-xl-block">
-                        <a id="contact-button" class="au-btn au-btn-radius au-btn-primary" asp-controller="Home" asp-action="Index" asp-fragment="contact-me">CONTACT ME</a>
+                    <a id="contact-button" class="au-btn au-btn-radius au-btn-primary" asp-controller="Home" asp-action="Index" asp-fragment="contact-me">CONTACT ME</a>
                 </div>
             </div>
         </div>
@@ -154,10 +151,10 @@
     </div>
     <!-- end header mobile-->
 </header>
-@if (TempData.ContainsKey("StatusMessage"))
+@if (TempData.TryGetValue("StatusMessage", out var statusMessage))
 {
     @await Html.PartialAsync("_StatusMessage",
-               TempData["StatusMessage"] as string)
+               statusMessage as string)
 }
 
 <main id="mainContent mb-0">
@@ -196,26 +193,30 @@
     <i class="fa fa-angle-up"></i>
 </div>
 
+<!-- Jquery JS-->
+<script src="~/vendor/jquery/jquery.min.js"></script>
+
 <!-- Bootstrap JS-->
 <script src="~/vendor/popper.js/popper.min.js"></script>
 <script src="~/vendor/bootstrap/bootstrap.min.js"></script>
+
 <!-- Vendor JS-->
-<script src="~/vendor/slick/slick.min.js"></script>
-<script src="~/vendor/animsition/animsition.min.js"></script>
-<script src="~/vendor/waypoints/jquery.waypoints.min.js"></script>
-<script src="~/vendor/jquery.counterup/jquery.counterup.min.js"></script>
-<script src="~/vendor/lightbox/js/lightbox.min.js"></script>
-<script src="~/vendor/isotope/isotope.pkgd.min.js"></script>
-<script src="~/vendor/wowjs/wow.min.js"></script>
-<script src="~/vendor/revolution/js/jquery.themepunch.tools.min.js"></script>
-<script src="~/vendor/revolution/js/jquery.themepunch.revolution.min.js"></script>
-<script src="~/js/layout/config-revolution-slider.min.js"></script>
+<script src="~/vendor/slick/slick.min.js" defer></script>
+<script src="~/vendor/animsition/animsition.min.js" defer></script>
+<script src="~/vendor/waypoints/jquery.waypoints.min.js" defer></script>
+<script src="~/vendor/jquery.counterup/jquery.counterup.min.js" defer></script>
+<script src="~/vendor/lightbox/js/lightbox.min.js" defer></script>
+<script src="~/vendor/isotope/isotope.pkgd.min.js" defer></script>
+<script src="~/vendor/wowjs/wow.min.js" defer></script>
+<script src="~/vendor/revolution/js/jquery.themepunch.tools.min.js" defer></script>
+<script src="~/vendor/revolution/js/jquery.themepunch.revolution.min.js" defer></script>
+<script src="~/js/layout/config-revolution-slider.min.js" defer></script>
 
 <!--Custom JS-->
 @await RenderSectionAsync("Scripts", false)
 
 <!-- Main JS-->
-<script src="~/js/layout/global.js"></script>
+<script src="~/js/layout/global.js" defer></script>
 
 </body>
 </html>

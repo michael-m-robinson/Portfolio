@@ -1,6 +1,7 @@
 ﻿@model FrontPageViewModel
 @using Microsoft.AspNetCore.Mvc.TagHelpers
 @inject IMWSImageService ImageService 
+
 @{
     ViewData["Title"] = "Mike Robinson's Site - Home";
     Layout = "~/Views/Shared/_Layout.cshtml";
@@ -92,7 +93,7 @@
 @if (Model.Projects.Any())
 {
     <!-- section portfolio-->
-    <section id="portfolio" class="section section-portfolio bg-white p-t-120 p-b-120">
+    <section class="section section-portfolio bg-white p-t-120 p-b-135">
         <div class="container">
             <div class="section-inner">
                 <h3 class="section-heading m-b-40">PORTFOLIO</h3>
@@ -108,30 +109,31 @@
                     }
                     @*TODO: Implement Project Categories*@
                 </ul>
-                <div id="projectItems" class="row po-list isotope">
+                <div class="row po-list isotope">
                     @for (var i = 0; i < Model.Projects.Count; i++)
                     {
                         var project = Model.Projects[i];
                         var projectCategoryList = project.ProjectCategories?.Select(p => p.Text).ToList();
                         var projectImage = project.ProjectImages?.OrderByDescending(pj => pj.Name).First();
+                        var base64ProjectImage = ImageService.DecodeImage(projectImage!.File, projectImage.FileContentType);
                         var classList = string.Empty;
                         if (projectCategoryList is not null)
                         {
                             classList = string.Join(" ", projectCategoryList);
                         }
 
-                        if (i < 4)
+                        @if (i < 4)
                         {
-                            <div class="col-lg-6 col-md-6 px-1 isotope-item @(classList.ToLower()) wow fadeIn" data-wow-duration="0.5s">
+                            <div class="col-lg-6 col-md-6 isotope-item @(classList.ToLower()) wow fadeIn" data-wow-duration="0.5s">
                                 <article class="card-primary card-portfolio">
                                     <a class="card-link-overlay" asp-controller="Projects" asp-action="Details" asp-route-slug="@project.Slug"></a>
                                     <div class="bg-overlay"></div>
                                     <figure class="card-figure">
-                                        <img class="card-image" src="@ImageService.DecodeImage(projectImage!.File, projectImage.FileContentType)" alt="@project.Title.ToUpper()"/>
+                                        <img class="card-image" src="@base64ProjectImage" alt="@project.Title.ToUpper()"/>
                                     </figure>
                                     <div class="card-featured">
                                         <a class="portfolio-link fa fa-chain" asp-controller="Projects" asp-action="Details" asp-route-slug="@project.Slug"></a>
-                                        <a class="portfolio-view fa fa-search" href="@ImageService.DecodeImage(projectImage.File, projectImage.FileContentType)" data-lightbox="roadtrip" data-title="@project.Title.ToUpper()"></a>
+                                        <a class="portfolio-view fa fa-search" href="@base64ProjectImage" data-lightbox="roadtrip" data-title="@project.Title.ToUpper()"></a>
                                     </div>
                                     <header class="card-header">
                                         <h3 class="card-title portfolio-title">@project.Title.ToUpper()</h3>
@@ -141,17 +143,16 @@
                         }
                         else
                         {
-                            var loadClass = i is < 8 ? "load-item" : "on-queue";
-                            <div id="@($"loadItem{i}")" class="col-lg-6 col-md-6 isotope-item @(classList.ToLower()) @(loadClass)">
+                            <div class="col-lg-6 col-md-6 isotope-item @(classList.ToLower()) load-item">
                                 <article class="card-primary card-portfolio">
                                     <a class="card-link-overlay" asp-controller="Projects" asp-action="Details" asp-route-slug="@project.Slug"></a>
                                     <div class="bg-overlay"></div>
                                     <figure class="card-figure">
-                                        @* <img class="card-image" src="@ImageService.DecodeImage(project.Image!, project.ImageType!)" alt="@project.Title.ToUpper()" /> *@
+                                        <img class="card-image" src="@base64ProjectImage" alt="@project.Title.ToUpper()" />
                                     </figure>
                                     <div class="card-featured">
                                         <a class="portfolio-link fa fa-chain" asp-controller="Projects" asp-action="Details" asp-route-slug="@project.Slug"></a>
-                                        @* <a class="portfolio-view fa fa-search" href="@ImageService.DecodeImage(project.Image!, project.ImageType!)" data-lightbox="roadtrip" data-title="@project.Title.ToUpper()"></a> *@
+                                        <a class="portfolio-view fa fa-search" href="@base64ProjectImage" data-lightbox="roadtrip" data-title="@project.Title.ToUpper()"></a>
                                     </div>
                                     <header class="card-header">
                                         <h3 class="card-title portfolio-title">@project.Title.ToUpper()</h3>
@@ -169,6 +170,7 @@
     </section>
     <!-- end section portfolio-->
 }
+<div></div>
 @if (Model.Posts.Any())
 {
     <!-- section blog-->
@@ -330,7 +332,6 @@
 @section Scripts
 {
     @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
-    <script src="~/js/layout/customProjects.js"></script>
     <script src="~/js/SmoothScroller.js"></script>
     <script src="~/js/FrontPageScroll.js"></script>
 }

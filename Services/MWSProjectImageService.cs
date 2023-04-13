@@ -56,7 +56,7 @@ public class MWSProjectImageService : IMWSProjectImageService
     #endregion
 
     #region Remove Stale Project Images
-    
+
     public async Task RemoveStaleProjectImagesAsync(Project project)
     {
         try
@@ -77,6 +77,4 @@ public class MWSProjectImageService : IMWSProjectImageService
     }
 
     #endregion
-
-    
 }

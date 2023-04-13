@@ -1,8 +1,5 @@
 ﻿#region Imports
 
-using System.Diagnostics;
-using System.Text.Json;
-using System.Text.Json.Serialization;
 using AspNetCore.ReCaptcha;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
@@ -13,6 +10,9 @@ using Portfolio.Models;
 using Portfolio.Models.ViewModels;
 using Portfolio.Services.Interfaces;
 using SmartBreadcrumbs.Attributes;
+using System.Diagnostics;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using X.PagedList;
 
 #endregion

@@ -1,10 +1,8 @@
 @using X.PagedList.Mvc.Core
 @using X.PagedList.Web.Common
 @using Microsoft.AspNetCore.Mvc.TagHelpers
-
-@model X.PagedList.IPagedList<Blog>
 @inject IMWSImageService ImageService
-
+@model X.PagedList.IPagedList<Blog>
 @{
     ViewData["Title"] = "Mike Robinson's Site - Current Blogs";
     Layout = "~/Views/Shared/_Layout.cshtml";

@@ -249,6 +249,24 @@ public class ProjectsController : Controller
 
     #endregion
 
+    #region Project Search Action
+
+    public async Task<IActionResult> Search(string term, int? page)
+    {
+        var blogUserId = _userManager.GetUserId(User);
+        var pageNumber = page ?? 1;
+        var pageSize = 10;
+        var projects = await _projectService.GetAllProjectsAsync();
+
+        var result = projects
+            .Where(p => p.Title.ToLower().Contains(term.ToLower()));
+
+        //return posts to the author index view.
+        return View("AuthorIndex", await result.ToPagedListAsync(pageNumber, pageSize));
+    }
+
+    #endregion
+
     private List<SelectListItem> GetProjectCategoryList(List<string> categoryList)
     {
         var selectItemList = new List<SelectListItem>();
@@ -285,24 +303,6 @@ public class ProjectsController : Controller
         if (project.Id == new Guid()) return false;
         return true;
     }
-
-    #region Project Search Action
-
-    public async Task<IActionResult> Search(string term, int? page)
-    {
-        var blogUserId = _userManager.GetUserId(User);
-        var pageNumber = page ?? 1;
-        var pageSize = 10;
-        var projects = await _projectService.GetAllProjectsAsync();
-
-        var result = projects
-            .Where(p => p.Title.ToLower().Contains(term.ToLower()));
-
-        //return posts to the author index view.
-        return View("AuthorIndex", await result.ToPagedListAsync(pageNumber, pageSize));
-    }
-
-    #endregion
 
     private void SetBase64ProjectImages(ProjectEditViewModel model)
     {

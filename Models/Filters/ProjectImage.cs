@@ -1,7 +1,7 @@
 ﻿#region Imports
 
-using System.ComponentModel.DataAnnotations;
 using Portfolio.Models.Content;
+using System.ComponentModel.DataAnnotations;
 
 #endregion
 

@@ -1,7 +1,5 @@
 #region Imports
 
-using System.Reflection;
-using System.Runtime.InteropServices;
 using AspNetCore.ReCaptcha;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Identity;
@@ -14,6 +12,8 @@ using Portfolio.Models.ViewModels;
 using Portfolio.Services;
 using Portfolio.Services.Interfaces;
 using SmartBreadcrumbs.Extensions;
+using System.Reflection;
+using System.Runtime.InteropServices;
 
 #endregion
 

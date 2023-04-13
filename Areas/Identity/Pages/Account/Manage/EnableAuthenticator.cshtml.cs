@@ -3,6 +3,8 @@
 
 #nullable disable
 
+#region Imports
+
 using System.ComponentModel.DataAnnotations;
 using System.Globalization;
 using System.Text;
@@ -11,6 +13,8 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Portfolio.Models;
+
+#endregion
 
 namespace Portfolio.Areas.Identity.Pages.Account.Manage;
 
@@ -114,22 +118,6 @@ public class EnableAuthenticatorModel : PageModel
         return RedirectToPage("./TwoFactorAuthentication");
     }
 
-    private async Task LoadSharedKeyAndQrCodeUriAsync(BlogUser user)
-    {
-        // Load the authenticator key & QR code URI to display on the form
-        var unformattedKey = await _userManager.GetAuthenticatorKeyAsync(user);
-        if (string.IsNullOrEmpty(unformattedKey))
-        {
-            await _userManager.ResetAuthenticatorKeyAsync(user);
-            unformattedKey = await _userManager.GetAuthenticatorKeyAsync(user);
-        }
-
-        SharedKey = FormatKey(unformattedKey);
-
-        var email = await _userManager.GetEmailAsync(user);
-        AuthenticatorUri = GenerateQrCodeUri(email, unformattedKey);
-    }
-
     private string FormatKey(string unformattedKey)
     {
         var result = new StringBuilder();
@@ -153,6 +141,22 @@ public class EnableAuthenticatorModel : PageModel
             _urlEncoder.Encode("Mike's portfolio"),
             _urlEncoder.Encode(email),
             unformattedKey);
+    }
+
+    private async Task LoadSharedKeyAndQrCodeUriAsync(BlogUser user)
+    {
+        // Load the authenticator key & QR code URI to display on the form
+        var unformattedKey = await _userManager.GetAuthenticatorKeyAsync(user);
+        if (string.IsNullOrEmpty(unformattedKey))
+        {
+            await _userManager.ResetAuthenticatorKeyAsync(user);
+            unformattedKey = await _userManager.GetAuthenticatorKeyAsync(user);
+        }
+
+        SharedKey = FormatKey(unformattedKey);
+
+        var email = await _userManager.GetEmailAsync(user);
+        AuthenticatorUri = GenerateQrCodeUri(email, unformattedKey);
     }
 
     /// <summary>

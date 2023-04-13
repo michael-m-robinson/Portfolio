@@ -3,25 +3,26 @@
 
 #nullable disable
 
+#region Imports
+
 using System.ComponentModel.DataAnnotations;
-using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.Options;
-using Portfolio.Extensions;
 using Portfolio.Models;
 using Portfolio.Models.Settings;
-using Portfolio.Services.Interfaces;
+
+#endregion
 
 namespace Portfolio.Areas.Identity.Pages.Account.Manage;
 
 public class DeletePersonalDataModel : PageModel
 {
+    private readonly AppSettings _appSettings;
     private readonly ILogger<DeletePersonalDataModel> _logger;
     private readonly SignInManager<BlogUser> _signInManager;
     private readonly UserManager<BlogUser> _userManager;
-    private readonly AppSettings _appSettings;
 
     public DeletePersonalDataModel(
         UserManager<BlogUser> userManager,

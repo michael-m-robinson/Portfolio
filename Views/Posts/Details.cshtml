@@ -1,11 +1,8 @@
 @using Microsoft.AspNetCore.Identity
 @using System.Net
-
-@model PostIndexViewModel
 @inject IMWSImageService ImageService
-@inject IMWSPostService PostService
 @inject UserManager<BlogUser> UserManager
-
+@model PostIndexViewModel
 @{
     ViewData["Title"] = $"Mike Robinson's Portfolio - {Model.Post.Title}";
     Layout = "~/Views/Shared/_Layout.cshtml";

@@ -3,6 +3,8 @@
 
 #nullable disable
 
+#region Imports
+
 using System.ComponentModel.DataAnnotations;
 using System.Text;
 using System.Text.Encodings.Web;
@@ -12,6 +14,8 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.WebUtilities;
 using Portfolio.Models;
 using Portfolio.Services.Interfaces;
+
+#endregion
 
 namespace Portfolio.Areas.Identity.Pages.Account.Manage;
 
@@ -56,19 +60,6 @@ public class EmailModel : PageModel
     /// </summary>
     [BindProperty]
     public InputModel Input { get; set; }
-
-    private async Task LoadAsync(BlogUser user)
-    {
-        var email = await _userManager.GetEmailAsync(user);
-        Email = email;
-
-        Input = new InputModel
-        {
-            NewEmail = email
-        };
-
-        IsEmailConfirmed = await _userManager.IsEmailConfirmedAsync(user);
-    }
 
     public async Task<IActionResult> OnGetAsync()
     {
@@ -141,6 +132,19 @@ public class EmailModel : PageModel
 
         StatusMessage = "Verification email sent. Please check your email.";
         return RedirectToPage();
+    }
+
+    private async Task LoadAsync(BlogUser user)
+    {
+        var email = await _userManager.GetEmailAsync(user);
+        Email = email;
+
+        Input = new InputModel
+        {
+            NewEmail = email
+        };
+
+        IsEmailConfirmed = await _userManager.IsEmailConfirmedAsync(user);
     }
 
     /// <summary>

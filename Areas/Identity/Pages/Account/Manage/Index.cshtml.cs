@@ -3,16 +3,18 @@
 
 #nullable disable
 
+#region Imports
+
 using System.ComponentModel.DataAnnotations;
-using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Portfolio.Data;
-using Portfolio.Enums;
 using Portfolio.Extensions;
 using Portfolio.Models;
 using Portfolio.Services.Interfaces;
+
+#endregion
 
 namespace Portfolio.Areas.Identity.Pages.Account.Manage;
 
@@ -22,7 +24,6 @@ public class IndexModel : PageModel
     private readonly IMWSImageService _imageService;
     private readonly SignInManager<BlogUser> _signInManager;
     private readonly UserManager<BlogUser> _userManager;
-    [TempData] public string StatusMessage { get; set; }
 
     public IndexModel(
         UserManager<BlogUser> userManager,
@@ -36,6 +37,8 @@ public class IndexModel : PageModel
         _imageService = imageService;
     }
 
+    [TempData] public string StatusMessage { get; set; }
+
     /// <summary>
     ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
     ///     directly from your code. This API may change or be removed in future releases.
@@ -46,60 +49,12 @@ public class IndexModel : PageModel
     ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
     ///     directly from your code. This API may change or be removed in future releases.
     /// </summary>
-
     /// <summary>
     ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
     ///     directly from your code. This API may change or be removed in future releases.
     /// </summary>
     [BindProperty]
     public InputModel Input { get; set; }
-
-    private async Task LoadAsync(BlogUser user)
-    {
-        var userName = await _userManager.GetUserNameAsync(user);
-        var phoneNumber = await _userManager.GetPhoneNumberAsync(user);
-
-        Username = userName;
-
-        if (User.IsInRole("Administrator"))
-        {
-            var facebookUrl = string.Empty;
-            if (!string.IsNullOrEmpty(user.FacebookUrl)) facebookUrl = user.FacebookUrl;
-
-            var instagramUrl = string.Empty;
-            if (!string.IsNullOrEmpty(user.InstagramUrl)) instagramUrl = user.InstagramUrl;
-
-            var pinterestUrl = string.Empty;
-            if (!string.IsNullOrEmpty(user.PinterestUrl)) pinterestUrl = user.PinterestUrl;
-
-            var twitterUrl = string.Empty;
-            if (!string.IsNullOrEmpty(user.TwitterUrl)) twitterUrl = user.TwitterUrl;
-
-            var youTubeUrl = string.Empty;
-            if (!string.IsNullOrEmpty(user.YouTubeUrl)) youTubeUrl = user.YouTubeUrl;
-
-            var authorDescriptionUrl = string.Empty;
-            if (!string.IsNullOrEmpty(user.AuthorDescription)) authorDescriptionUrl = user.AuthorDescription;
-
-            Input = new InputModel
-            {
-                FacebookUrl = facebookUrl,
-                InstagramUrl = instagramUrl,
-                PinterestUrl = pinterestUrl,
-                TwitterUrl = twitterUrl,
-                YouTubeUrl = youTubeUrl,
-                AuthorDescription = authorDescriptionUrl,
-                PhoneNumber = phoneNumber
-            };
-        }
-        else
-        {
-            Input = new InputModel
-            {
-                PhoneNumber = phoneNumber
-            };
-        }
-    }
 
     public async Task<IActionResult> OnGetAsync()
     {
@@ -165,6 +120,53 @@ public class IndexModel : PageModel
         await _signInManager.RefreshSignInAsync(user);
         StatusMessage = "Your profile has been updated";
         return RedirectToPage();
+    }
+
+    private async Task LoadAsync(BlogUser user)
+    {
+        var userName = await _userManager.GetUserNameAsync(user);
+        var phoneNumber = await _userManager.GetPhoneNumberAsync(user);
+
+        Username = userName;
+
+        if (User.IsInRole("Administrator"))
+        {
+            var facebookUrl = string.Empty;
+            if (!string.IsNullOrEmpty(user.FacebookUrl)) facebookUrl = user.FacebookUrl;
+
+            var instagramUrl = string.Empty;
+            if (!string.IsNullOrEmpty(user.InstagramUrl)) instagramUrl = user.InstagramUrl;
+
+            var pinterestUrl = string.Empty;
+            if (!string.IsNullOrEmpty(user.PinterestUrl)) pinterestUrl = user.PinterestUrl;
+
+            var twitterUrl = string.Empty;
+            if (!string.IsNullOrEmpty(user.TwitterUrl)) twitterUrl = user.TwitterUrl;
+
+            var youTubeUrl = string.Empty;
+            if (!string.IsNullOrEmpty(user.YouTubeUrl)) youTubeUrl = user.YouTubeUrl;
+
+            var authorDescriptionUrl = string.Empty;
+            if (!string.IsNullOrEmpty(user.AuthorDescription)) authorDescriptionUrl = user.AuthorDescription;
+
+            Input = new InputModel
+            {
+                FacebookUrl = facebookUrl,
+                InstagramUrl = instagramUrl,
+                PinterestUrl = pinterestUrl,
+                TwitterUrl = twitterUrl,
+                YouTubeUrl = youTubeUrl,
+                AuthorDescription = authorDescriptionUrl,
+                PhoneNumber = phoneNumber
+            };
+        }
+        else
+        {
+            Input = new InputModel
+            {
+                PhoneNumber = phoneNumber
+            };
+        }
     }
 
     /// <summary>

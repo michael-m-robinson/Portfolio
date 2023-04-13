@@ -1,9 +1,7 @@
 ﻿@using System.Security.Claims
 @using Microsoft.AspNetCore.Mvc.TagHelpers
-
 @inject IMWSImageService ImageService
 @model BlogCreateEditViewModel
-
 @{
     var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
     ViewData["Title"] = "Mike Robinson's Site - Edit";

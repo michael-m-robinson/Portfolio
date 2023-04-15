@@ -26,9 +26,10 @@ function setCategoryState(categories, classListArr) {
 
     if (isMatch === false && category.innerHTML.toLowerCase() !== 'all') {
       category.disabled = true;
-      category.setAttribute('data-toggle', 'tooltip');
-      category.setAttribute('title', 'coming soon 😁');
       $(category).css('color', '#e0ebeb');
+    } else {
+      category.disabled = false;
+      $(category).css('color', '#666');
     }
   });
 }

@@ -30,6 +30,6 @@ public class ErrorController : Controller
         if (statusCode == 404)
             return View("404");
 
-        return View("404");
+        return View("Error");
     }
 }

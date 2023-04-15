@@ -123,7 +123,7 @@
 
                         @if (i < 4)
                         {
-                            <div class="col-lg-6 col-md-6 isotope-item @(classList.ToLower()) wow fadeIn" data-wow-duration="0.5s">
+                            <div class="portfolioProject col-lg-6 col-md-6 isotope-item @(classList.ToLower()) wow fadeIn" data-wow-duration="0.5s">
                                 <article class="card-primary card-portfolio">
                                     <a class="card-link-overlay" asp-controller="Projects" asp-action="Details" asp-route-slug="@project.Slug"></a>
                                     <div class="bg-overlay"></div>
@@ -142,7 +142,7 @@
                         }
                         else
                         {
-                            <div class="col-lg-6 col-md-6 isotope-item @(classList.ToLower()) load-item">
+                            <div class="portfolioProject col-lg-6 col-md-6 isotope-item @(classList.ToLower()) load-item">
                                 <article class="card-primary card-portfolio">
                                     <a class="card-link-overlay" asp-controller="Projects" asp-action="Details" asp-route-slug="@project.Slug"></a>
                                     <div class="bg-overlay"></div>
@@ -353,6 +353,7 @@
     @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
     <script src="~/js/SmoothScroller.js"></script>
     <script src="~/js/FrontPageScroll.js"></script>
+    <script src="~/js/projects.js"></script>
 }
 
 @section Metadata
